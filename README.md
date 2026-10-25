@@ -1,4 +1,4 @@
-# akvo
+# Ret-apo "Rechtenfleth: akvoniveloj"
 
 Tiu chi GitHub-deponejo priskribas Guglo-Apoj-Skripto-projekton por neoficiala astronomia prognozo de
 akvoniveloj en Rechtenfleth lau la harmona prezento de neegalajhoj (germane: "harmonische Darstellung der Ungleichheiten", angle: "harmonic representation of inequalities").
