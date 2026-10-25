@@ -1,4 +1,4 @@
-# Rechtenfleth: akvoniveloj
+# akvo
 
 Tio chi priskribas Guglo-Apoj-Skripto-projekton por neoficiala astronomia prognozo de
 akvoniveloj en Rechtenfleth lau la harmona prezento de neegalajhoj.
