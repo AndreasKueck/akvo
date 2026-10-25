@@ -1,9 +1,9 @@
 # akvo
 
-Tio chi priskribas Guglo-Apoj-Skripto-projekton por neoficiala astronomia prognozo de
-akvoniveloj en Rechtenfleth lau la harmona prezento de neegalajhoj.
+Tiu chi GitHub-deponejo priskribas Guglo-Apoj-Skripto-projekton por neoficiala astronomia prognozo de
+akvoniveloj en Rechtenfleth lau la harmona prezento de neegalajhoj (germane: "harmonische Darstellung der Ungleichheiten", angle: "harmonic representation of inequalities").
 
-La ret-apo eligas la
+Ret-apo "[Rechtenfleth: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbw1p6S3LyNaRTIcSu4myv3SP-ZzSX302erglMDh8R9wwq1ZRAHCwJ8Nb9q5t-Isl0aX/exec)" eligas la
 akvonivelon por elektita momento kaj krome la tempojn kaj altojn de la
 maksimumaj kaj minimumaj akvoniveloj de elektita tago.
 
