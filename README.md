@@ -28,13 +28,13 @@ La analizo kaj la ret-apo estas apartaj:
 
 1. `analizo/hddu.gs` legas la mezurojn kaj rekonas maksimumojn
    kaj minimumojn. Kun Astronomy Engine ghi kalkulas verajn
-   lunajn transitojn, por ordigi la okazajhojn en kvar klasojn.
+   lunajn transirojn, por ordigi la okazajhojn en kvar klasojn.
 2. Por chiu klaso ghi adaptas apartajn modelojn de tempo kaj
    alto per la metodo HDdU: harmona prezento de neegalajhoj.
    La 39 kandidataj frekvencoj estas donitaj en la kodo;
    el la mezuroj estas kalkulataj la koeficientoj, amplitudoj
    kaj fazoj. Lau la disponebla tempospaco povas esti uzataj
-   malpli ol 39 komponantoj.
+   malpli, ol 39 komponantoj.
 3. Aldone ghi analizas la akvonivelan kurbon, ordinare kun
    96 apogpunktoj en chiu meza luna tago. Akvonivelo je
    arbitra minuto rezultas el la sintezo de tiuj modeloj kaj
@@ -75,7 +75,7 @@ La analizo uzas **Astronomy Engine 2.1.19** de Don Cross:
 - [La uzita retumila versio 2.1.19: astronomy.browser.js](https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.js)
 
 Kopiu la kompletan enhavon de tiu JavaScript-dosiero en
-dosieron `Astronomy.gs` de la analiza Apps-Script-projekto.
+dosieron `Astronomy.gs` de la analiza Apoj-Skripto-projekto.
 Ghi disponigas la globalan objekton `Astronomy`.
 Ne uzu nur fragmenton de la dosiero au la version destinitan
 nur por Node.js.
@@ -101,9 +101,9 @@ V8 kaj leg-aliro al la fontaj kalkultabeloj.
    tempokolumno. Ne forigu vicojn kun mankantaj mezuroj.
    Registru konatajn nombrajn miskodojn en `HD.INVALID_LEVELS`.
 4. Chiuj fontoj devas havi la saman mezurstacion, unuon kaj
-   altecan referencon. La nuna ret-apo supozas centimetrojn
+   alto-referencon. La nuna ret-apo supozas centimetrojn
    kaj dividas la modelajn altojn per 100 por montri metrojn.
-5. Rulu `testAstronomie()` por kompari la lunajn transitojn
+5. Rulu `testAstronomie()`, por kompari la lunajn transirojn
    kun la referencaj ekzemploj.
 6. Rulu `hdduStart()` sen argumentoj kaj donu la petitajn
    permesojn. Ghi kreas novan rezultan kalkultabelon kaj
@@ -115,7 +115,7 @@ La defaulte agordita analiza intervalo estas de
 kun la fino ekskluzivita.
 
 Kontrolu la progreson per `hdduStatus()`. La analizo povas
-dauri plurajn horojn au pli longe pro la kvotoj de Apps Script.
+dauri plurajn horojn au pli longe pro la kvotoj de Apoj-Scripto.
 Post korekto de eraro au renovigo de la kvoto rulu
 `hdduFortsetzen()`.
 
@@ -144,7 +144,7 @@ La konverto al metroj okazas en la ret-apo.
 1. Kreu alian Guglo-Tabelon kaj malfermu ghian ligitan
    Apoj-Skripto-projekton per la menuo de etendajhoj.
 2. Aldonu nur `retapo/Code.gs` kaj `retapo/index.html`.
-   En Apps Script la HTML-dosiero nomighu `index`.
+   En Apoj-Skripto la HTML-dosiero nomighu `index`.
    **Ne aldonu `hddu.gs` au Astronomy Engine al tiu projekto.**
    La analiza kodo kaj la kodo de la ret-apo havas samnomajn
    funkciojn kaj devas resti en apartaj projektoj.
