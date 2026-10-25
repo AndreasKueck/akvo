@@ -211,5 +211,3 @@ validigo de tiu etendo.
   limo, ne garantio pri valideco.
 - Ne uzu la rezultojn, kiel solan bazon por navigado
   au sekurecaj decidoj.
-
-[Privateco](https://jhau.de/privateco.html)
