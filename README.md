@@ -155,7 +155,7 @@ La konverto al metroj okazas en la ret-apo.
    petitajn permesojn. La funkcio kopias la modelojn en la
    novan kalkultabelon kaj konservas la referencon en la
    skriptaj atributoj.
-5. Lauvole rulu `eksportiModelojn_()`. Ghi kreas tekstdosieron
+5. Lauvole rulu `eksportiModelojn`. Ghi kreas tekstdosieron
    en Guglo-"Drive". Per ghia tuta enhavo anstatauigu
    `const RE_MODEL = null;` en `Code.gs`. Tiel la modeloj
    estas rekte enigitaj en la kodon kaj la prognozoj ne
