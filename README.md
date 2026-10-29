@@ -74,7 +74,7 @@ La analizo uzas **Astronomy Engine 2.1.19** de Don Cross:
 - [Originala projekto kaj dokumentado](https://github.com/cosinekitty/astronomy)
 - [La uzita retumila versio 2.1.19: astronomy.browser.js](https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.js)
 
-Kopiu la kompletan enhavon de tiu JavaScript-dosiero en
+Kopiu la kompletan enhavon de tiu Java-dosiero en
 dosieron `Astronomy.gs` de la analiza Apoj-Skripto-projekto.
 Ghi disponigas la globalan objekton `Astronomy`.
 Ne uzu nur fragmenton de la dosiero au la version destinitan
@@ -115,7 +115,7 @@ La defaulte agordita analiza intervalo estas de
 kun la fino ekskluzivita.
 
 Kontrolu la progreson per `hdduStatus()`. La analizo povas
-dauri plurajn horojn au pli longe pro la kvotoj de Apoj-Scripto.
+dauri plurajn horojn au pli longe pro la kvotoj de Apoj-Skripto.
 Post korekto de eraro au renovigo de la kvoto rulu
 `hdduFortsetzen()`.
 
@@ -189,7 +189,7 @@ la mezuraj datumoj au automate por la cetera kodo.
 La metodaj bazoj cititaj en `hddu.gs` estas:
 
 - Müller-Navarra: *Berichte des BSH*, n-ro 50/2013, "Gezeitenvorausberechnung mit der Harmonischen Darstellung der Ungleichheiten (On Tidal Predictions by Means of Harmonic Representation of Inequalities)".
-- Andreas Boesch / Sylvain Müller-Navarra: "Reassessment of long-period constituents for tidal predictions along
+- Andreas Boesch / Sylvin Müller-Navarra: "Reassessment of long-period constituents for tidal predictions along
 the German North Sea coast and its tidally influenced rivers" (2019).
 
 La uzo de tiu komponantaro por la akvonivela kurbo estas
