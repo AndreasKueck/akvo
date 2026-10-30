@@ -76,7 +76,8 @@ akvo/
 - [`retapo/index.html`](retapo/index.html): kalendaro, horelekto
   kaj montrado de rezultoj.   
 - [`aliaj_lokoj/brv`](aliaj_lokoj/brv/): Analoge pri aliaj lokoj; aktuale nur pri Bremervörde (brv); tamen `aliaj_lokoj/brv/analizo/hddu.gs` kaj `aliaj_lokoj/brv/retapo/Code.gs` estas programitaj kun modifoj, nome
-  kun konsidero je tio, ke tempajn brechojn havas la serio de mezuritaj akvoniveloj elshutitaj el [staciaj datumoj de Bremervörde, numero 5980010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980010).
+  kun konsidero je tio, ke tempajn brechojn havas la serio de mezuritaj akvoniveloj elshutitaj el [staciaj datumoj de Bremervörde, numero 5980010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980010);
+  jen ret-apo "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)".
 
 La analizo uzas **Astronomy Engine 2.1.19** de Don Cross:
 
