@@ -16,7 +16,7 @@ La bazo estas minutaj mezuroj de akvoniveloj en centimetroj,
 devenantaj de **PEGELONLINE de la germana federacia administracio
 pri akvovojoj kaj shipiro (WSV)**:
 
-- [Staciaj datumoj de Rechtenfleth, pegelnumero 4970030](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4970030)
+- [Staciaj datumoj de Rechtenfleth, numero 4970030](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4970030)
 
 Por la analizo la mezuroj estis konservitaj en kvar
 Guglo-kalkultabeloj por la periodoj 2007–2010, 2011–2015,
@@ -60,6 +60,13 @@ akvo/
 └── retapo/
     ├── Code.gs
     └── index.html
+└── aliaj_lokoj/
+    └── brv/
+        ├── analizo/
+            └── hddu.gs
+        └── retapo/
+            ├── Code.gs
+            └── index.html
 ```
 
 - [`analizo/hddu.gs`](analizo/hddu.gs): analizo kaj kontrolaj
@@ -67,7 +74,9 @@ akvo/
 - [`retapo/Code.gs`](retapo/Code.gs): importo de modeloj kaj
   servilaj kalkuloj.
 - [`retapo/index.html`](retapo/index.html): kalendaro, horelekto
-  kaj montrado de rezultoj.
+  kaj montrado de rezultoj.   
+- [`aliaj_lokoj/brv`](aliaj_lokoj/brv/): Analoge pri aliaj lokoj; aktuale nur pri Bremervörde (brv); tamen `aliaj_lokoj/brv/analizo/hddu.gs` kaj `aliaj_lokoj/brv/retapo/Code.gs` estas programitaj kun modifoj, nome
+  kun konsidero je tio, ke tempajn brechojn havas la serio de mezuritaj akvoniveloj elshutitaj el [staciaj datumoj de Bremervörde, numero 5980010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980010).
 
 La analizo uzas **Astronomy Engine 2.1.19** de Don Cross:
 
