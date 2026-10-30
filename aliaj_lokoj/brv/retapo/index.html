@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="eo">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+
+  <title>Bremerv&ouml;rde: akvoniveloj</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --blue: #075985;
+      --blue-dark: #0c4a6e;
+      --pale: #e0f2fe;
+      --border: #cbd5e1;
+      --text: #172b3a;
+      --muted: #526474;
+      --background: #f1f5f9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+                   "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(100% - 28px, 820px);
+      margin: 28px auto;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      color: var(--blue-dark);
+      font-size: clamp(1.6rem, 4vw, 2.15rem);
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 1.25rem;
+    }
+
+    h3 {
+      margin: 22px 0 10px;
+      font-size: 1.05rem;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 18px;
+      box-shadow: 0 4px 18px rgb(15 23 42 / 4%);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .small {
+      font-size: .9rem;
+    }
+
+    fieldset {
+      min-width: 0;
+      padding: 0;
+      margin: 0;
+      border: 0;
+    }
+
+    label {
+      display: block;
+      font-weight: 650;
+      margin-bottom: 6px;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button,
+    select {
+      min-height: 42px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    button {
+      cursor: pointer;
+      padding: 8px 13px;
+      background: white;
+      color: var(--text);
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--pale);
+    }
+
+    button:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+      outline: 3px solid #38bdf8;
+      outline-offset: 3px;
+    }
+
+    button:disabled,
+    select:disabled {
+      cursor: wait;
+      opacity: .6;
+    }
+
+    select {
+      padding: 7px 10px;
+      background: white;
+      color: var(--text);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .calendar {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .calendar-nav select {
+      min-width: 0;
+    }
+
+    #month {
+      flex: 1;
+    }
+
+    #year {
+      width: 91px;
+    }
+
+    .calendar-nav button {
+      padding: 6px 11px;
+    }
+
+    .weekdays,
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 4px;
+    }
+
+    .weekdays {
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: .85rem;
+      text-align: center;
+    }
+
+    .weekdays span {
+      padding: 4px 0;
+    }
+
+    .day {
+      min-width: 0;
+      min-height: 39px;
+      padding: 5px 0;
+      border-color: transparent;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .day.today {
+      border-color: var(--blue);
+    }
+
+    .day.selected {
+      color: white;
+      background: var(--blue);
+      font-weight: 700;
+    }
+
+    .day.selected:hover:not(:disabled) {
+      background: var(--blue-dark);
+    }
+
+    #selectedDate {
+      margin-top: 12px;
+      font-weight: 650;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-row {
+      display: flex;
+      align-items: end;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .time-row select {
+      min-width: 78px;
+    }
+
+    .time-separator {
+      padding-bottom: 9px;
+      font-weight: 700;
+    }
+
+    #send {
+      display: block;
+      width: 100%;
+      margin-top: 18px;
+      padding: 11px 18px;
+      background: var(--blue);
+      border-color: var(--blue);
+      color: white;
+      font-weight: 700;
+    }
+
+    #send:hover:not(:disabled) {
+      background: var(--blue-dark);
+    }
+
+    #status {
+      margin: 16px 0 0;
+      min-height: 1.5em;
+    }
+
+    #status.error {
+      color: #a11919;
+    }
+
+    .level {
+      border-left: 5px solid var(--blue);
+      background: #f0f9ff;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 22px;
+    }
+
+    #levelValue {
+      font-size: 1.6rem;
+      font-weight: 750;
+      margin: 8px 0 0;
+    }
+
+    #levelMessage {
+      margin-top: 10px;
+      margin-bottom: 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 11px 9px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      color: var(--blue-dark);
+      background: #f8fafc;
+    }
+
+    td:nth-child(2),
+    td:last-child {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    #warnings {
+      padding-left: 22px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    #warnings li {
+      margin-bottom: 9px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      main {
+        margin-top: 18px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<main>
+  <header>
+    <h1>Bremerv&ouml;rde: akvoniveloj</h1>
+
+    <p class="muted">
+      Elektu daton en la kalendaro kaj horon en UTK.
+      La rezultoj aperos nur post premo de Sendi.
+    </p>
+
+    <p class="muted small">
+      Chiuj horoj estas en UTK.
+    </p>
+
+    <p class="small">
+      <a href="https://github.com/AndreasKueck/akvo" target="_blank">GitHub-deponejo</a>
+    </p>
+<!--
+    <p class="small">
+      Jen Snapchat-lenso &quot;<a href="https://www.snapchat.com/lens/ca26de21a63f4056a5296b834ff293ee" target="_blank">Akvoniveloj<a/>&quot; kun simila funkcio; jen pria <a href="https://github.com/AndreasKueck/lensstudioakvonivelojdato" target="_blank">GitHub-deponejo</a>.<br>
+      Jen tiu chi ret-apo, kiel <a href="https://www.dropbox.com/scl/fi/8hni98zp4sr1jg86zdax6/Akvo_v1.0.0_1792927828983.apk?rlkey=5dcwa1dbbq8dzbrd1n9n6rfxd&st=q4oiv9ha&dl=0" target="_blank">Android-apo &quot;Akvo&quot;</a>.<br>
+      Ghi estis kreita per AppMint disponigita de SmartrixLabs. Elshuto, instalo kaj uzo de la APK okazas je propra risko.
+    </p>
+-->
+    <p class="small">
+      La metodo uzata chi tie estas la harmona prezento de neegalajhoj (germane: &quot;harmonische Darstellung der Ungleichheiten&quot;). Por aliaj lokoj oni povas uzi ret-apon &quot;<a href="https://script.google.com/a/~/macros/s/AKfycbzgeChQUzIlVM5wmtsrmwZkNNJUZgFLLPvtYkNztVaFhHHq2xp3NqImx2uolmQw_qBG4g/exec" target="_blank">Prognozo de akvoniveloj per TICON-4-datumoj</a>&quot;; ties bazo estas la harmona metodo.
+    </p>
+    <p class="small">
+      <a href="https://jhau.de/privateco.html" target="_blank">Privateco</a>
+    </p>
+  </header>
+
+  <section class="card" aria-label="Elekto de dato kaj horo">
+    <form id="form" novalidate>
+      <fieldset id="controls">
+        <div class="form-grid">
+
+          <div>
+            <label id="calendarLabel">Dato en UTK</label>
+
+            <div class="calendar"
+                 role="group"
+                 aria-labelledby="calendarLabel">
+
+              <div class="calendar-nav">
+                <button type="button"
+                        id="previous"
+                        title="Antaua monato"
+                        aria-label="Antaua monato">
+                  ‹
+                </button>
+
+                <select id="month" aria-label="Monato"></select>
+                <select id="year" aria-label="Jaro"></select>
+
+                <button type="button"
+                        id="next"
+                        title="Sekva monato"
+                        aria-label="Sekva monato">
+                  ›
+                </button>
+              </div>
+
+              <div class="weekdays">
+                <span title="Lundo">Lu</span>
+                <span title="Mardo">Ma</span>
+                <span title="Merkredo">Me</span>
+                <span title="Jhaudo">Jh</span>
+                <span title="Vendredo">Ve</span>
+                <span title="Sabato">Sa</span>
+                <span title="Dimancho">Di</span>
+              </div>
+
+              <div id="days"
+                   class="days"
+                   role="group"
+                   aria-label="Tagoj de la monato"></div>
+            </div>
+
+            <p id="selectedDate" aria-live="polite"></p>
+
+            <p class="small muted">
+              La elektebla jarintervalo estas nur teknika limo,
+              ne garantio pri la valideco de la prognozo.
+            </p>
+          </div>
+
+          <div>
+            <div class="time-row">
+              <div>
+                <label for="hour">Horo</label>
+                <select id="hour"></select>
+              </div>
+
+              <span class="time-separator" aria-hidden="true">:</span>
+
+              <div>
+                <label for="minute">Minuto</label>
+                <select id="minute"></select>
+              </div>
+
+              <span class="time-separator">UTK</span>
+            </div>
+
+            <button type="button" id="now">
+              Nuna dato kaj horo
+            </button>
+
+            <p class="small muted" style="margin-top:12px">
+              La komencaj valoroj devenas de la horlogho de via aparato.
+              Ili estas montrataj en UTK.
+            </p>
+
+            <button type="submit" id="send">Sendi</button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+
+    <p id="status" role="status" aria-live="polite"></p>
+
+    <noscript>
+      Por uzi la formularon, bonvolu aktivigi JavaScript.
+    </noscript>
+  </section>
+
+  <section id="results"
+           class="card"
+           aria-labelledby="resultTitle"
+           hidden>
+
+    <h2 id="resultTitle">Rezultoj</h2>
+
+    <div class="level">
+      <h3 style="margin-top:0">Akvonivelo je la elektita horo</h3>
+      <p id="levelTime"></p>
+      <p id="levelValue"></p>
+      <p id="levelMessage"></p>
+    </div>
+
+    <h3>Maksimumaj kaj minimumaj akvoniveloj de la elektita tago</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Akvoniveloj</th>
+            <th scope="col">Dato kaj horo en UTK</th>
+            <th scope="col">Akvonivelo (m)</th>
+          </tr>
+        </thead>
+        <tbody id="events"></tbody>
+      </table>
+    </div>
+
+    <p id="noEvents" hidden>
+      La modelo ne liveris okazajhojn de maksimumaj au minimumaj akvoniveloj por tiu tago.
+    </p>
+
+    <p class="small muted" style="margin-top:12px">
+      La tago ampleksas la tempon de 00:00 ghis, sed ne inkluzive,
+      00:00 de la sekva tago. La taga elekto okazas antau rondigo;
+      evento tre proksima al noktomezo povas esti montrata kun la
+      dato de la sekva tago.
+    </p>
+
+    <h3>Gravaj rimarkoj</h3>
+    <ul id="warnings"></ul>
+
+    <p id="modelDate" class="small muted"></p>
+  </section>
+</main>
+
+<script>
+  'use strict';
+
+  const MIN_YEAR = Number('<?= minYear ?>');
+  const MAX_YEAR = Number('<?= maxYear ?>');
+
+  const MONTHS = [
+    'Januaro', 'Februaro', 'Marto', 'Aprilo',
+    'Majo', 'Junio', 'Julio', 'Augusto',
+    'Septembro', 'Oktobro', 'Novembro', 'Decembro'
+  ];
+
+  const el = id => document.getElementById(id);
+
+  let selectedDate = '';
+  let viewYear;
+  let viewMonth;
+  let busy = false;
+
+  function pad(value) {
+    return String(value).padStart(2, '0');
+  }
+
+  function dateText(year, month, day) {
+    return String(year).padStart(4, '0') +
+      '-' + pad(month + 1) + '-' + pad(day);
+  }
+
+  function addOption(select, value, text) {
+    const option = document.createElement('option');
+    option.value = String(value);
+    option.textContent = text;
+    select.appendChild(option);
+  }
+
+  function setupOptions() {
+    MONTHS.forEach((month, index) => {
+      addOption(el('month'), index, month);
+    });
+
+    for (let year = MIN_YEAR; year <= MAX_YEAR; year++) {
+      addOption(el('year'), year, String(year));
+    }
+
+    for (let hour = 0; hour < 24; hour++) {
+      addOption(el('hour'), pad(hour), pad(hour));
+    }
+
+    for (let minute = 0; minute < 60; minute++) {
+      addOption(el('minute'), pad(minute), pad(minute));
+    }
+  }
+
+  function clearResults() {
+    el('results').hidden = true;
+    el('status').textContent = '';
+    el('status').classList.remove('error');
+  }
+
+  function showError(message) {
+    el('results').hidden = true;
+    el('status').textContent = message;
+    el('status').classList.add('error');
+  }
+
+  function useNow() {
+    if (busy) return;
+
+    const now = new Date();
+    const year = now.getUTCFullYear();
+
+    if (year < MIN_YEAR || year > MAX_YEAR) {
+      showError('La nuna jaro estas ekster la elektebla intervalo.');
+      return;
+    }
+
+    selectedDate = now.toISOString().slice(0, 10);
+    viewYear = year;
+    viewMonth = now.getUTCMonth();
+
+    el('hour').value = pad(now.getUTCHours());
+    el('minute').value = pad(now.getUTCMinutes());
+
+    clearResults();
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    el('month').value = String(viewMonth);
+    el('year').value = String(viewYear);
+
+    el('selectedDate').textContent =
+      'Elektita dato: ' + selectedDate + ' UTK';
+
+    el('previous').disabled =
+      viewYear === MIN_YEAR && viewMonth === 0;
+
+    el('next').disabled =
+      viewYear === MAX_YEAR && viewMonth === 11;
+
+    const container = el('days');
+    container.replaceChildren();
+
+    const firstDay = new Date(Date.UTC(viewYear, viewMonth, 1));
+    const offset = (firstDay.getUTCDay() + 6) % 7;
+
+    const dayCount = new Date(
+      Date.UTC(viewYear, viewMonth + 1, 0)
+    ).getUTCDate();
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    for (let i = 0; i < offset; i++) {
+      const spacer = document.createElement('span');
+      spacer.setAttribute('aria-hidden', 'true');
+      container.appendChild(spacer);
+    }
+
+    for (let day = 1; day <= dayCount; day++) {
+      const date = dateText(viewYear, viewMonth, day);
+      const button = document.createElement('button');
+
+      button.type = 'button';
+      button.className = 'day';
+      button.textContent = String(day);
+      button.setAttribute(
+        'aria-label',
+        day + ' ' + MONTHS[viewMonth] + ' ' + viewYear
+      );
+      button.setAttribute(
+        'aria-pressed',
+        date === selectedDate ? 'true' : 'false'
+      );
+
+      if (date === today) {
+        button.classList.add('today');
+        button.setAttribute('aria-current', 'date');
+      }
+
+      if (date === selectedDate) {
+        button.classList.add('selected');
+      }
+
+      button.addEventListener('click', () => {
+        if (busy) return;
+
+        selectedDate = date;
+        clearResults();
+        renderCalendar();
+
+        // Tastaturfokus nach dem Neuaufbau erhalten.
+        const selected = el('days').querySelector('.selected');
+        if (selected) selected.focus();
+      });
+
+      container.appendChild(button);
+    }
+  }
+
+  function moveMonth(delta) {
+    if (busy) return;
+
+    const total = viewYear * 12 + viewMonth + delta;
+    const year = Math.floor(total / 12);
+    const month = total - year * 12;
+
+    if (year < MIN_YEAR || year > MAX_YEAR) return;
+
+    viewYear = year;
+    viewMonth = month;
+
+    clearResults();
+    renderCalendar();
+  }
+
+  function changeCalendarView() {
+    if (busy) return;
+
+    viewYear = Number(el('year').value);
+    viewMonth = Number(el('month').value);
+
+    clearResults();
+    renderCalendar();
+  }
+
+  function setBusy(value) {
+    busy = value;
+    el('controls').disabled = value;
+    el('form').setAttribute('aria-busy', value ? 'true' : 'false');
+    el('send').textContent = value ? 'Kalkulado...' : 'Sendi';
+  }
+
+  function appendCell(row, text) {
+    const cell = document.createElement('td');
+    cell.textContent = text;
+    row.appendChild(cell);
+  }
+
+  function renderResult(result) {
+    el('resultTitle').textContent = 'Rezultoj por ' + result.dato;
+
+    el('levelTime').textContent =
+      result.dato + ' ' + result.horo + ' UTK';
+
+    if (result.kurboPreta) {
+      el('levelValue').textContent =
+        result.nivelo + ' ' + result.unuo;
+      el('levelMessage').textContent = '';
+      el('levelMessage').hidden = true;
+    } else {
+      el('levelValue').textContent = 'Ankorau ne disponebla';
+      el('levelMessage').textContent = result.niveloMesagho;
+      el('levelMessage').hidden = false;
+    }
+
+    const body = el('events');
+    body.replaceChildren();
+
+    result.eventoj.forEach(event => {
+      const row = document.createElement('tr');
+      appendCell(row, event.speco);
+      appendCell(row, event.tempo);
+      appendCell(row, event.nivelo + ' ' + result.unuo);
+      body.appendChild(row);
+    });
+
+    el('noEvents').hidden = result.eventoj.length > 0;
+
+    const warnings = el('warnings');
+    warnings.replaceChildren();
+
+    result.avertoj.forEach(text => {
+      const item = document.createElement('li');
+      item.textContent = text;
+      warnings.appendChild(item);
+    });
+
+    el('modelDate').textContent =
+      'Modelaro importita je ' + result.importita + '.';
+
+    el('results').hidden = false;
+    el('status').classList.remove('error');
+    el('status').textContent = 'La kalkulo estas finita.';
+  }
+
+  el('form').addEventListener('submit', event => {
+    event.preventDefault();
+
+    if (busy) return;
+
+    const date = selectedDate;
+    const time = el('hour').value + ':' + el('minute').value;
+
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)
+    ) {
+      showError('Bonvolu elekti validajn daton kaj horon en UTK.');
+      return;
+    }
+
+    clearResults();
+    setBusy(true);
+    el('status').textContent = 'Kalkulado... Bonvolu atendi.';
+
+    google.script.run
+      .withSuccessHandler(result => {
+        setBusy(false);
+
+        if (!result || !result.ok) {
+          showError(
+            result && result.mesagho
+              ? result.mesagho
+              : 'Ne eblis ricevi la rezulton.'
+          );
+          return;
+        }
+
+        try {
+          renderResult(result);
+        } catch (error) {
+          showError('Ne eblis montri la rezulton. Bonvolu reprovi.');
+        }
+      })
+      .withFailureHandler(() => {
+        setBusy(false);
+
+        // Keine unübersetzten Google-Fehler in der Oberfläche anzeigen.
+        showError(
+          'Ne eblis kontakti la servilon au plenumi la kalkulon. ' +
+          'Bonvolu reprovi.'
+        );
+      })
+      .kalkuli(date, time);
+  });
+
+  el('previous').addEventListener('click', () => moveMonth(-1));
+  el('next').addEventListener('click', () => moveMonth(1));
+
+  el('month').addEventListener('change', changeCalendarView);
+  el('year').addEventListener('change', changeCalendarView);
+
+  el('hour').addEventListener('change', clearResults);
+  el('minute').addEventListener('change', clearResults);
+
+  el('now').addEventListener('click', useNow);
+
+  setupOptions();
+  useNow();
+
+  // Absichtlich kein Berechnungsaufruf beim Laden der Seite.
+</script>
+</body>
+</html>
