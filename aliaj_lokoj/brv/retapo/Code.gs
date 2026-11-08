@@ -734,7 +734,7 @@ function makeWarnings_(bundle, start, time, events) {
     RE.DATUM_EO,
 
     'La tempoj de maksimuma kaj minimuma akvonivelo devenas de apartaj modeloj; ' +
-    'ili ne devas ekzakte koincidi kun la ekstremoj de la akvonivela kurbo.',
+    'ili ne nepre ekzakte koincidas kun la ekstremoj de la akvonivela kurbo.',
 
     'La tempoj estas rondigitaj al la plej proksima minuto. ' +
     'Tio ne signifas precizecon de unu minuto.'
