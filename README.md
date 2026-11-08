@@ -7,6 +7,10 @@ Ret-apo "[Rechtenfleth: akvoniveloj](https://script.google.com/a/~/macros/s/AKfy
 akvonivelon por elektita momento kaj krome la tempojn kaj altojn de la
 maksimumaj kaj minimumaj akvoniveloj de elektita tago.
 
+Estis kreitaj pliaj ret-apoj kun la sama celo por aliaj lokoj:
+- "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)"
+- "[Hamburgo ‒ St. Pauli: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzrddFJWsO8ivLMrhQv5MbLxcSPl1NPi1-XTWVOSI6zu_Zp0k-q60kzfUw5sfSte2tA/exec)"
+
 Chiuj tempoj estas en UTK. Akvoniveloj
 aperas en metroj.
 
