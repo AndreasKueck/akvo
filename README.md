@@ -67,6 +67,12 @@ akvo/
         └── retapo/
             ├── Code.gs
             └── index.html
+    └── hamburgo_st_pauli/
+        ├── analizo/
+            └── hddu.gs
+        └── retapo/
+            ├── Code.gs
+            └── index.html
 ```
 
 - [`analizo/hddu.gs`](analizo/hddu.gs): analizo kaj kontrolaj
@@ -75,9 +81,9 @@ akvo/
   servilaj kalkuloj.
 - [`retapo/index.html`](retapo/index.html): kalendaro, horelekto
   kaj montrado de rezultoj.   
-- [`aliaj_lokoj/brv`](aliaj_lokoj/brv/): Analoge pri aliaj lokoj; aktuale nur pri Bremervörde (brv); tamen `aliaj_lokoj/brv/analizo/hddu.gs` kaj `aliaj_lokoj/brv/retapo/Code.gs` estas programitaj kun modifoj, nome
-  kun konsidero je tio, ke tempajn brechojn havas la serio de mezuritaj akvoniveloj elshutitaj el [staciaj datumoj de Bremervörde, numero 5980010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980010);
-  jen ret-apo "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)".
+- [`aliaj_lokoj/brv`](aliaj_lokoj/brv/): pri Bremervörde (brv):<br>`aliaj_lokoj/brv/analizo/hddu.gs` kaj `aliaj_lokoj/brv/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de mezuritaj akvoniveloj elshutitaj el [staciaj datumoj de Bremervörde, numero 5980010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980010);<br>jen ret-apo "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)".
+- [`aliaj_lokoj/hamburgo_st_pauli`](aliaj_lokoj/hamburgo_st_pauli/): pri Hamburgo &ndash; St. Pauli:<br>`aliaj_lokoj/hamburgo_st_pauli/analizo/hddu.gs`:<br>Por prepari la analizon, estis havigita la dosiero pri `stpaulitg-stp-deu-cmems` pere de "[GESLA / Download – Version 4.1 (July 2026)](https://gesla787883612.wordpress.com/downloads/)" > "GESLA-4.1 CSV META_DATA FILE" > GESLA-dosiero pri `stpaulitg-stp-deu-cmems`;
+datumprovizinto: Copernicus Marine Environment Monitoring Service (CMEMS).<br>Tiu dosiero estis renomita al hamburgo_st_pauli.txt kaj alshutita al la Gugla memorilo.<br>La tiea ID-numero de hamburgo_st_pauli.txt estis skribita en la skriptaj ecoj, kiel valoro de `SOURCE_ID_FILE`.<br>`aliaj_lokoj/hamburgo_st_pauli/retapo/Code.gs`:<br>Post starto de la analizo per funkcio hdduStart ekestas nova Guglo-tabelo. Ghia ID-numero estis skribita en la skriptaj ecoj, kiel valoro de `SOURCE_ID`;<br>jen ret-apo "[Hamburgo ‒ St. Pauli: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzrddFJWsO8ivLMrhQv5MbLxcSPl1NPi1-XTWVOSI6zu_Zp0k-q60kzfUw5sfSte2tA/exec)".
 
 La analizo uzas **Astronomy Engine 2.1.19** de Don Cross:
 
