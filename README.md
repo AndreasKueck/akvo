@@ -9,6 +9,7 @@ maksimumaj kaj minimumaj akvoniveloj de elektita tago.
 
 Estis kreitaj pliaj ret-apoj kun la sama celo por aliaj lokoj:
 - "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)"
+- "[Glückstadt: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxZfSR32y1MrSwdr4DsdU24eXOp0NL5WLtfuKBJgJdwwCqxFW16sVHdTTj_TVE7pX83/exec)"
 - "[Hamburgo ‒ St. Pauli: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzrddFJWsO8ivLMrhQv5MbLxcSPl1NPi1-XTWVOSI6zu_Zp0k-q60kzfUw5sfSte2tA/exec)"
 
 Chiuj tempoj estas en UTK. Akvoniveloj
@@ -71,6 +72,12 @@ akvo/
         └── retapo/
             ├── Code.gs
             └── index.html
+    └── glueckstadt/
+        ├── analizo/
+            └── hddu.gs
+        └── retapo/
+            ├── Code.gs
+            └── index.html
     └── hamburgo_st_pauli/
         ├── analizo/
             └── hddu.gs
@@ -86,6 +93,7 @@ akvo/
 - [`retapo/index.html`](retapo/index.html): kalendaro, horelekto
   kaj montrado de rezultoj.   
 - [`aliaj_lokoj/brv`](aliaj_lokoj/brv/): pri Bremervörde (brv):<br>`aliaj_lokoj/brv/analizo/hddu.gs` kaj `aliaj_lokoj/brv/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de mezuritaj akvoniveloj elshutitaj el [staciaj datumoj de Bremervörde, numero 5980010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980010);<br>jen ret-apo "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)".
+- [`aliaj_lokoj/glueckstadt`](aliaj_lokoj/glueckstadt/): pri Glückstadt:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; mezuritaj akvoniveloj estas elshutitaj el [staciaj datumoj de Glückstadt, numero 5970035](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5970035);<br>jen ret-apo "[Glückstadt: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxZfSR32y1MrSwdr4DsdU24eXOp0NL5WLtfuKBJgJdwwCqxFW16sVHdTTj_TVE7pX83/exec)".
 - [`aliaj_lokoj/hamburgo_st_pauli`](aliaj_lokoj/hamburgo_st_pauli/): pri Hamburgo &ndash; St. Pauli:<br>`aliaj_lokoj/hamburgo_st_pauli/analizo/hddu.gs`:<br>Por prepari la analizon, estis havigita la dosiero pri `stpaulitg-stp-deu-cmems` pere de "[GESLA / Download – Version 4.1 (July 2026)](https://gesla787883612.wordpress.com/downloads/)" > "GESLA-4.1 CSV META_DATA FILE" > GESLA-dosiero pri `stpaulitg-stp-deu-cmems`;
 datumprovizinto: Copernicus Marine Environment Monitoring Service (CMEMS). Ret-apo "[Hamburgo ‒ St. Pauli: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzrddFJWsO8ivLMrhQv5MbLxcSPl1NPi1-XTWVOSI6zu_Zp0k-q60kzfUw5sfSte2tA/exec)" do estis kreita per helpo de datumoj disponigitaj de la Europ-Unia mar-serva informo Copernicus (&quot;Generated using E.U. Copernicus Marine Service Information&quot;).<br>La elshutita dosiero `stpaulitg-stp-deu-cmems` estis renomita al `hamburgo_st_pauli.txt` kaj alshutita al la Gugla memorilo.<br>La tiea ID-numero de hamburgo_st_pauli.txt estis skribita en la skriptaj ecoj, kiel valoro de `SOURCE_ID_FILE`.<br>`aliaj_lokoj/hamburgo_st_pauli/retapo/Code.gs`:<br>Post starto de la analizo per funkcio hdduStart ekestas nova Guglo-tabelo. Ghia ID-numero estis skribita en la skriptaj ecoj, kiel valoro de `SOURCE_ID`;<br>jen ret-apo "[Hamburgo ‒ St. Pauli: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzrddFJWsO8ivLMrhQv5MbLxcSPl1NPi1-XTWVOSI6zu_Zp0k-q60kzfUw5sfSte2tA/exec)".
 
