@@ -1,94 +1,162 @@
-/**
+/*
+Hier ist die vollständige, zusammengeführte Fassung von **`hddu.gs`**. Sie ersetzt die bisherige Datei vollständig; die vorhandene Astronomy-Bibliothek bleibt unverändert im Projekt.
+
+**Start:** `hdduStart()`  
+**Fortschritt:** `hdduStatus()`  
+**Nach Abschluss:** `beispielWasserstand20261014()` oder `beispielGanglinie20261014()`
+
+Die 39 Glieder entsprechen Tabelle 4 des ab 2020 verwendeten Konstituentensatzes. Die minutengenaue Wasserstandsausgabe beruht auf der zusätzlich analysierten Ganglinie, nicht auf einer bloßen Verbindung von HW und NW. Der Code wurde hier nicht gegen deine Google-Tabellen ausgeführt.
+
  * hddu.gs
  *
- * Hamburg / St. Pauli – HDdU mit GESLA-5-Eingabe.
+ * HDdU-Arbeitsimplementierung:
  *
- * Eigenständiges Analyseprojekt.
- * Astronomy Engine 2.1.19 muss separat vorhanden sein.
+ * 1. Gemeinsame Analyse minütlicher Wasserstandsdaten aus vier Quellen.
+ * 2. Scheitelpunktanalyse für HW/NW:
+ *    vier Ereignisklassen mit jeweils Zeit- und Höhenmodell.
+ * 3. Ganglinienanalyse mit standardmäßig 96 Stützstellen
+ *    je mittlerem Mondtag.
+ * 4. Wasserstandsvorausberechnung für einzelne UTC-Minuten
+ *    oder Zeiträume.
  *
- * Quelle:
- *   unkomprimierte GESLA-Textdatei in Google Drive
+ * Grundlagen:
+ * - Müller-Navarra: Berichte des BSH 50/2013.
+ * - Boesch / Müller-Navarra:
+ *   Reassessment of long-period constituents ...
+ *   Tabelle 4: 39 Glieder, verwendet ab Gezeitentafeln 2020.
  *
- * Zeit:
- *   ausschließlich UTC; TIME ZONE HOURS muss 0 sein
+ * Voraussetzung:
+ * Astronomy Engine mit globalem Objekt Astronomy ist im
+ * selben Apps-Script-Projekt vorhanden.
  *
- * Höhen:
- *   Meter, Höhenbezug unverändert aus dem Dateikopf
+ * WICHTIG:
+ * - Jede Quellenzeile entspricht einer Minute.
+ * - Fehlende Messungen müssen als leere/ungültige Werte
+ *   erhalten bleiben; Zeilen dürfen nicht entfernt sein.
+ * - Alle Quellen müssen denselben Pegel, dieselbe Einheit
+ *   und denselben Höhenbezug verwenden.
+ * - Keine amtliche Gezeitenvorausberechnung.
+ * - Keine Vorhersage von Windstau oder aktuellen Abflüssen.
+ * - Minütliche Ausgabe bedeutet nicht eine garantierte
+ *   Vorhersagegenauigkeit von einer Minute.
  *
- * Raster:
- *   10 Minuten. Fehlende Positionen werden nicht aufgefüllt.
- *
- * Ablauf:
- *   IMPORT -> EXTRACT -> ESTIMATE -> ASSIGN
- *   -> PEAK_FIT -> CURVE_INIT -> CURVE_SAMPLE
- *   -> CURVE_FIT -> DONE
- *
- * Steuerung:
- *   hdduTests()
+ * Bedienung:
  *   hdduStart()
  *   hdduStatus()
- *   hdduWeiter()
  *   hdduFortsetzen()
- *   hdduPause()
  *   hdduStop()
  *
- * Keine amtliche Gezeitenvorausberechnung.
- * Kein Windstau-, Luftdruck- oder Abflussvorhersagemodell.
+ * Nach vollständiger Analyse:
+ *   beispielWasserstand20261014()
+ *   beispielGanglinie20261014()
+ *   beispiel20261103()
+ *
+ * Während einer laufenden Analyse weder Quellen noch
+ * Konfiguration verändern.
  */
 
-const HH = Object.freeze({
-  SOURCE_FILE_ID: PropertiesService.getScriptProperties().getProperty('SOURCE_FILE_ID'),
-  EXPECTED_SITE: 'StPauliTG',
-  EXPECTED_CODE: 'StP',
-  EXPECTED_DATUM: 'DHHN92 / Amsterdam',
+// ============================================================
+// Konfiguration
+// ============================================================
 
-  // null: letzte 19 Kalenderjahre bis zum nominalen Dateiende.
-  // Alternativ UTC-Zeichenfolgen, z.B. '2007-01-01T00:00:00Z'.
-  START_UTC: null,
-  END_UTC_EXCLUSIVE: null,
+const HD = {
+  FIRST_ROW: 2,
+  LEVEL_COLUMN: 2,
 
-  STEP_MINUTES: 10,
+  // Gemeinsamer Nullpunkt aller absoluten Minutenindizes.
+  FIRST_UTC: Date.parse('2006-12-31T23:00:00Z'),
 
-  // Bewusst konservativ:
-  // QC 0 = ungeprüft, QC 2 = bereits interpoliert -> ausgeschlossen.
-  ACCEPT_QC: [1],
-
-  CHUNK_BYTES: 512 * 1024,
-  EXTRACT_DAYS: 60,
-  SAMPLE_MOON_DAYS: 40,
-  ASSIGN_BLOCK: 300,
-
-  EXTREME_HALF_MINUTES: 120,
-  MAX_PLATEAU_MINUTES: 60,
-
-  // Ausgangspunkt für die Wahl des halbtägigen Intervallzweiges.
-  // Kein fest vorgegebenes Ergebnis der Analyse.
-  HW_BRANCH_HOURS: 15 + 22 / 60,
-  MAX_ASSIGN_ERROR_HOURS: 2.5,
-
-  CURVE_POINTS: 96,
-
+  // BSH 50/2013, Abschnitt 4b.
+  // Nicht die abweichende Angabe im Formelzeichenverzeichnis.
   T0: Date.UTC(1949, 11, 31, 21, 8, 0),
   SYNC_MINUTES: 24.23,
+  MOON_DAY_H: 2 * 12.4206012,
 
-  // Zeitbasis aus der bisherigen Implementierung / BSH 50/2013.
-  // Analyse und Synthese verwenden exakt denselben Wert.
-  MOON_DAY_HOURS: 2 * 12.4206012,
+  // Verarbeitung je Triggeraufruf.
+  READ_BLOCK: 60000,
+  ASSIGN_BLOCK: 350,
 
-  STATE_KEY: 'HAMBURG_HDDU_STATE_V4',
-  RESULT_KEY: 'HAMBURG_HDDU_RESULT_V4',
+  // Scheitelpunkterkennung.
+  SMOOTH_HALF: 5,
+  EXTREME_HALF: 120,
+  MAX_PLATEAU_MIN: 60,
 
-  VERSION: 4
-});
+  /*
+   * Nur zur Auswahl des Intervallzweiges.
+   * Das eigentliche mittlere HW-Intervall wird geschätzt.
+   */
+  HW_LAG_BRANCH_H: 12,
 
-const HH_MINUTE = 60000;
-const HH_HOUR = 3600000;
-const HH_DAY = 86400000;
-const HH_STEP = HH.STEP_MINUTES * HH_MINUTE;
-const HH_PERIOD = HH.MOON_DAY_HOURS * HH_HOUR;
-const HH_RAD = Math.PI / 180;
+  MAX_ASSIGN_ERROR_H: 2.5,
 
-const HH_TERMS = [
+  // Bekannte Fehlwertcodes ergänzen, z. B. [-9999].
+  INVALID_LEVELS: [],
+
+  STATE_KEY: 'HDDU_STATE_V2',
+  RESULT_KEY: 'HDDU_RESULT_ID_V2'
+};
+
+const HD_SOURCES = [
+  {
+    label: '2007–2010',
+    id: '1qs4_xQ_6k5GlYWlHtsy_jC-GaAnpeMxf1x8-DY-lcwM',
+    gid: 0,
+    firstUTC: '2006-12-31T23:00:00Z',
+    endUTC: '2010-12-31T23:00:00Z'
+  },
+  {
+    label: '2011–2015',
+    id: '1x1hAmgSRXkvmKBLoYmZw4ff8zT5_E5c5-D8dy-bWmuA',
+    gid: 0,
+    firstUTC: '2010-12-31T23:00:00Z',
+    endUTC: '2015-12-31T23:00:00Z'
+  },
+  {
+    label: '2016–2020',
+    id: '1BE0vtw0ODw-O9uCUp851yTk3BSe-IIO2wyTdHfC9Fhc',
+    gid: 0,
+    firstUTC: '2015-12-31T23:00:00Z',
+    endUTC: '2020-12-31T23:00:00Z'
+  },
+  {
+    label: '2021–2025',
+    id: '1mN2BjGZAtcjy_ktPt8M7lEHr-yjLLCsVGAv8m4sFZfQ',
+    gid: 0,
+    firstUTC: '2020-12-31T23:00:00Z',
+    endUTC: '2025-12-31T23:00:00Z'
+  }
+];
+
+const HD_CURVE = {
+  /*
+   * 96: Raster entsprechend BSH 50/2013.
+   * 288: dichteres Raster, mehr Rechenzeit und Speicher.
+   * Nur vor einer neuen Analyse ändern.
+   */
+  POINTS: 96,
+
+  // Mondtage je Leselauf der Ganglinienaufbereitung.
+  SAMPLE_DAYS: 20,
+
+  // Schutz gegen übergroße synchrone Ausgabeaufrufe.
+  MAX_OUTPUT_ROWS: 100000
+};
+
+const HOUR = 3600000;
+const MINUTE = 60000;
+const DAY = 86400000;
+const RAD = Math.PI / 180;
+
+/*
+ * Doodson, Grad/Transitnummer, Rang.
+ *
+ * Genau die 39 Glieder aus Tabelle 4 des Aufsatzes
+ * von Boesch / Müller-Navarra.
+ *
+ * Die Frequenzen werden unmittelbar aus Tabelle 4 verwendet.
+ * Keine Rekonstruktion aus den Argumentzahlen anderer Tabellen.
+ */
+const HD_TERMS = [
   ['ZZZZAZ',   0.0548098,  6],
   ['ZZZBZZ',   0.2306165, 13],
   ['ZZAZZZ',   1.0201944,  7],
@@ -130,176 +198,233 @@ const HH_TERMS = [
   ['ZHRZZZ', 100.9442917, 32]
 ];
 
-let HH_INDEX_CACHE = null;
-let HH_RAW_CACHE = new Map();
+// ============================================================
+// Start, Status, Fortsetzen und Hintergrundverarbeitung
+// ============================================================
 
-/* ============================================================
- * Steuerung
- * ============================================================ */
-
-function hdduStart() {
+/**
+ * Startet Scheitelpunkt- und Ganglinienanalyse.
+ *
+ * Ohne Argumente:
+ * [2006-12-31T23:00Z, 2025-12-31T23:00Z)
+ *
+ * Beispiel:
+ * hdduStart(
+ *   '2010-01-01 0000Z',
+ *   '2025-12-31 2300Z'
+ * );
+ *
+ * Das Ende ist exklusiv.
+ */
+function hdduStart(vonUTC, bisUTC) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
 
   try {
-    hhRequireAstronomy_();
+    requireAstronomy_();
 
-    const old = hhLoadState_();
+    const old = loadState_();
+
     if (old && old.stage !== 'DONE') {
       throw new Error(
-        'Eine Analyse existiert bereits. Fortsetzen oder hdduStop() ausführen.'
+        'Eine Analyse existiert bereits. ' +
+        'Mit hdduFortsetzen() fortsetzen oder mit hdduStop() verwerfen.'
       );
     }
 
-    hhCheckConfig_();
-
-    const file = DriveApp.getFileById(HH.SOURCE_FILE_ID);
-    const source = {
-      id: file.getId(),
-      name: file.getName(),
-      size: file.getSize(),
-      modified: file.getLastUpdated().getTime()
-    };
-
-    if (source.size < 100) {
-      throw new Error('Quelldatei ist leer oder zu klein.');
-    }
-
-    const first = hhReadByteBlock_(source, 0);
-    const header = hhParseHeader_(first.text);
-    hhValidateHeader_(header);
-
-    const nominalStart = hhGeslaTime_(header.start);
-    const nominalLast = hhGeslaTime_(header.end);
-    const nominalEnd = nominalLast + HH_STEP;
-
-    let end = HH.END_UTC_EXCLUSIVE === null
-      ? nominalEnd
-      : hhParseUTC_(HH.END_UTC_EXCLUSIVE);
-
-    let start;
-
-    if (HH.START_UTC === null) {
-      const d = new Date(end);
-      d.setUTCFullYear(d.getUTCFullYear() - 19);
-      start = Math.max(nominalStart, d.getTime());
-    } else {
-      start = hhParseUTC_(HH.START_UTC);
+    if (HD_TERMS.length !== 39) {
+      throw new Error('Erwartet werden die 39 Glieder aus Tabelle 4.');
     }
 
     if (
-      start < nominalStart ||
-      end > nominalEnd ||
-      end <= start ||
-      (start - nominalStart) % HH_STEP !== 0 ||
-      (end - nominalStart) % HH_STEP !== 0
+      !Number.isInteger(HD_CURVE.POINTS) ||
+      HD_CURVE.POINTS < 96 ||
+      HD_CURVE.POINTS > 288
     ) {
-      throw new Error('Analysegrenzen passen nicht zum Quellenintervall/Raster.');
-    }
-
-    if (end - start < 365 * HH_DAY) {
       throw new Error(
-        'Mindestens ein Jahr erforderlich; fachlich werden 19 Jahre empfohlen.'
+        'HD_CURVE.POINTS muss eine ganze Zahl zwischen 96 und 288 sein.'
       );
     }
 
-    hhRemoveTriggers_();
+    if (
+      !Number.isInteger(HD_CURVE.SAMPLE_DAYS) ||
+      HD_CURVE.SAMPLE_DAYS < 1
+    ) {
+      throw new Error('HD_CURVE.SAMPLE_DAYS muss positiv und ganzzahlig sein.');
+    }
 
-    const ss = SpreadsheetApp.create(
-      'Hamburg St. Pauli HDdU ' +
+    const start = parseMinuteUTC_(
+      vonUTC === undefined ? HD_SOURCES[0].firstUTC : vonUTC
+    );
+
+    const end = parseMinuteUTC_(
+      bisUTC === undefined
+        ? HD_SOURCES[HD_SOURCES.length - 1].endUTC
+        : bisUTC
+    );
+
+    const availableStart = Date.parse(HD_SOURCES[0].firstUTC);
+    const availableEnd =
+      Date.parse(HD_SOURCES[HD_SOURCES.length - 1].endUTC);
+
+    if (
+      start < availableStart ||
+      end > availableEnd ||
+      end <= start
+    ) {
+      throw new Error(
+        'Analysezeitraum liegt außerhalb der Quellen oder ist ungültig.'
+      );
+    }
+
+    const begin = (start - HD.FIRST_UTC) / MINUTE;
+    const count = (end - HD.FIRST_UTC) / MINUTE;
+
+    if (
+      !Number.isInteger(begin) ||
+      !Number.isInteger(count) ||
+      count - begin < 10000
+    ) {
+      throw new Error(
+        'Analysezeitraum zu kurz oder nicht minutengerastert.'
+      );
+    }
+
+    removeTriggers_();
+
+    const sources = buildSourceManifest_();
+
+    const out = SpreadsheetApp.create(
+      'HDdU 39 Glieder ' +
       Utilities.formatDate(new Date(), 'UTC', 'yyyy-MM-dd HH:mm')
     );
-    ss.setSpreadsheetTimeZone('Etc/UTC');
 
-    const info = ss.getSheets()[0];
+    out.setSpreadsheetTimeZone('Etc/UTC');
+
+    const info = out.getSheets()[0];
     info.setName('Info');
-    hhResize_(info, 30, 2);
 
-    info.getRange(1, 1, 12, 2).setValues([
+    const infoRows = [
       ['Eigenschaft', 'Wert'],
-      ['Verfahren', 'HDdU Hamburg GESLA V4'],
-      ['Station', HH.EXPECTED_SITE],
-      ['Analysebeginn UTC', hhIso_(start)],
-      ['Analyseende UTC exklusiv', hhIso_(end)],
-      ['Status', 'IMPORT'],
-      ['Einheit', 'm'],
-      ['Höhenbezug laut Quelle', header.datum],
-      ['Zeitbasis', 'UTC; GESLA TIME ZONE HOURS 0'],
-      ['Quellraster Minuten', HH.STEP_MINUTES],
-      ['QC-Auswahl', JSON.stringify(HH.ACCEPT_QC) + '; Use=1'],
-      ['Ganglinienpunkte je Mondtag', HH.CURVE_POINTS]
+      ['Verfahren', 'HDdU: Scheitelpunkte und Ganglinie'],
+      ['Analysebeginn UTC', iso_(start)],
+      ['Analyseende UTC, exklusiv', iso_(end)],
+      ['Zeitschritt der Quellen', '1 Minute je Zeile, auch bei Leerwerten'],
+      ['Status', 'EXTRACT'],
+      ['Konstituentenkandidaten', HD_TERMS.length],
+      ['Ganglinien-Stützstellen je Mondtag', HD_CURVE.POINTS],
+      ['Höhenbezug', 'Originaleinheit und Original-Höhendatum der Quellen'],
+      [
+        'Voraussetzung',
+        'Alle Quellen gehören zum selben Pegel und haben denselben Höhenbezug.'
+      ]
+    ];
+
+    info.getRange(1, 1, infoRows.length, 2).setValues(infoRows);
+    info.setFrozenRows(1);
+
+    const sourceInfo = createSheet_(out, 'Quellen', [
+      'Zeitraum',
+      'Spreadsheet_ID',
+      'GID',
+      'B2_UTC',
+      'Ende_UTC_exklusiv',
+      'Soll_Minuten',
+      'Vorhandene_Zeilen',
+      'Verwendbare_Zeilen',
+      'Fehlende_Endzeilen',
+      'Zusatzzeilen'
     ]);
 
-    hhNewSheet_(ss, 'Quelle', ['Eigenschaft', 'Wert']);
-    hhWrite_(ss.getSheetByName('Quelle'), 2, [
-      ['Dateiname', source.name],
-      ['Drive-ID', source.id],
-      ['Dateigröße Bytes', source.size],
-      ['Datei geändert UTC', hhIso_(source.modified)],
-      ['GESLA-Header', JSON.stringify(header)]
+    appendRows_(sourceInfo, sources.map(s => [
+      s.label,
+      s.id,
+      s.gid,
+      s.firstUTC,
+      s.endUTC,
+      s.capacity,
+      s.actual,
+      s.available,
+      Math.max(0, s.capacity - s.actual),
+      Math.max(0, s.actual - s.capacity)
+    ]));
+
+    createSheet_(out, 'Extrema', [
+      'UTC_ms',
+      'Art',
+      'Wasserstand'
     ]);
 
-    hhNewSheet_(ss, 'Rohdaten', ['UTC_ms', 'Wasserstand_m_gueltig']);
-    hhNewSheet_(ss, 'Zeitindex', [
-      'Startzeile', 'Zeilenzahl', 'Erste_UTC_ms', 'Letzte_UTC_ms'
+    createSheet_(out, 'Zuordnung', [
+      'Halbtransit_q',
+      'Transitnummer_n',
+      'k',
+      'Intervall_zum_mittleren_oberen_Transit_h',
+      'Wasserstand',
+      'Ereignis_UTC_ms',
+      'Wahrer_Transit_UTC_ms',
+      'Zuordnungsfehler_h'
     ]);
-    hhNewSheet_(ss, 'Import_Diagnostik', ['Eigenschaft', 'Wert']);
-    hhNewSheet_(ss, 'Extrema', ['UTC_ms', 'Art', 'Wasserstand_m']);
-    hhNewSheet_(ss, 'Zuordnung', [
-      'q', 'n', 'k', 'Intervall_h', 'Wasserstand_m',
-      'Ereignis_UTC_ms', 'Wahrer_Transit_UTC_ms', 'Fehler_h'
+
+    createSheet_(out, 'Modell', [
+      'k',
+      'JSON'
     ]);
-    hhNewSheet_(ss, 'Modell', ['k', 'JSON']);
-    hhNewSheet_(ss, 'Diagnostik', [
-      'k', 'Vorhanden', 'Verwendet', 'Glieder',
-      'Fit_RMSE_Zeit_min', 'Fit_RMSE_Hoehe_m',
-      'Test_N', 'Test_RMSE_Zeit_min', 'Test_RMSE_Hoehe_m',
-      'Test_Bias_Zeit_min', 'Test_Bias_Hoehe_m', 'Test_Glieder'
+
+    createSheet_(out, 'Koeffizienten', [
+      'k',
+      'Groesse',
+      'Doodson',
+      'Grad_pro_Transit',
+      'Cos_Koeff',
+      'Sin_Koeff',
+      'Amplitude',
+      'Phase_Grad'
     ]);
-    hhNewSheet_(ss, 'Arbeitsmodell', ['Eigenschaft', 'JSON']);
+
+    createSheet_(out, 'Diagnostik', [
+      'k',
+      'Zugeordnet',
+      'Verwendet',
+      'Glieder',
+      'Anpassungs_RMSE_Zeit_min',
+      'Anpassungs_RMSE_Hoehe_Originaleinheit',
+      'Test_N',
+      'Test_RMSE_Zeit_min',
+      'Test_RMSE_Hoehe_Originaleinheit',
+      'Test_Glieder'
+    ]);
 
     const state = {
-      version: HH.VERSION,
-      signature: hhSignature_(),
-      stage: 'IMPORT',
-      outputId: ss.getId(),
-      source: source,
-      header: header,
-      start: start,
-      end: end,
-      nominalStart: nominalStart,
-      nominalLast: nominalLast,
-      byteOffset: 0,
-      physicalLines: 0,
-      previousTime: null,
-      firstTime: null,
-      imported: 0,
-      accepted: 0,
-      selected: 0,
-      selectedAccepted: 0,
-      missingSlots: 0,
-      qcCounts: [0, 0, 0, 0, 0, 0],
-      useZero: 0,
-      nullCount: 0,
-      nonTenMinuteSteps: 0,
-      committed: {
-        Rohdaten: 1,
-        Zeitindex: 1,
-        Extrema: 1,
-        Zuordnung: 1
-      },
-      createdUTC: new Date().toISOString()
+      version: 2,
+      stage: 'EXTRACT',
+      outputId: out.getId(),
+
+      // Absolute Minutenindizes relativ zu HD.FIRST_UTC.
+      begin: begin,
+      count: count,
+      next: begin,
+
+      analysisStart: start,
+      analysisEnd: end,
+      sources: sources,
+      curvePoints: HD_CURVE.POINTS,
+      createdUTC: iso_(Date.now())
     };
 
-    hhSaveState_(state);
+    rememberAppendRows_(state, out);
+    saveState_(state);
+
     PropertiesService.getScriptProperties()
-      .setProperty(HH.RESULT_KEY, ss.getId());
+      .setProperty(HD.RESULT_KEY, out.getId());
 
-    hhCreateTrigger_();
+    ScriptApp.newTrigger('hdduWeiter')
+      .timeBased()
+      .everyMinutes(1)
+      .create();
 
-    console.log('Ergebnis: ' + ss.getUrl());
-    console.log('Zeitraum: ' + hhIso_(start) + ' bis ' + hhIso_(end));
-    return ss.getUrl();
+    console.log('Ergebnisdatei: ' + out.getUrl());
+    return out.getUrl();
 
   } finally {
     lock.releaseLock();
@@ -311,77 +436,92 @@ function hdduWeiter() {
   if (!lock.tryLock(1000)) return;
 
   try {
-    const s = hhLoadState_();
+    const state = loadState_();
 
-    if (!s || s.stage === 'DONE') {
-      hhRemoveTriggers_();
+    if (!state || state.stage === 'DONE') {
+      removeTriggers_();
       return;
     }
 
-    if (s.version !== HH.VERSION || s.signature !== hhSignature_()) {
-      throw new Error('Konfiguration/Programmversion passt nicht zum Arbeitszustand.');
+    if (state.version !== 2) {
+      throw new Error(
+        'Unpassender Arbeitszustand. Analyse neu starten.'
+      );
     }
 
-    HH_INDEX_CACHE = null;
-    HH_RAW_CACHE = new Map();
+    const out = SpreadsheetApp.openById(state.outputId);
 
-    const ss = SpreadsheetApp.openById(s.outputId);
-    hhRollbackAppends_(ss, s);
+    /*
+     * Entfernt unbestätigte Anhänge eines abgebrochenen Laufs.
+     * Gangliniendaten und Modelle werden an feste Zeilen geschrieben
+     * und sind bei Wiederholung überschreibbar.
+     */
+    restoreAppendRows_(state, out);
 
-    switch (s.stage) {
-      case 'IMPORT':
-        hhImportBlock_(ss, s);
-        break;
+    switch (state.stage) {
       case 'EXTRACT':
-        hhExtractBlock_(ss, s);
+        extractBlock_(state, out);
         break;
+
       case 'ESTIMATE':
-        hhEstimate_(ss, s);
+        estimateLags_(state, out);
         break;
+
       case 'ASSIGN':
-        hhAssignBlock_(ss, s);
+        assignBlock_(state, out);
         break;
-      case 'PEAK_FIT':
-        hhFitStep_(ss, s, false);
+
+      case 'FIT':
+        fitNextClass_(state, out);
         break;
+
       case 'CURVE_INIT':
-        hhCurveInit_(ss, s);
+        curveInitialize_(state, out);
         break;
+
       case 'CURVE_SAMPLE':
-        hhCurveSample_(ss, s);
+        curveSampleBlock_(state, out);
         break;
+
       case 'CURVE_FIT':
-        hhFitStep_(ss, s, true);
+        curveFitStep_(state, out);
         break;
+
       default:
-        throw new Error('Unbekannte Stufe: ' + s.stage);
+        throw new Error(
+          'Unbekannter Arbeitszustand: ' + state.stage
+        );
     }
 
-    delete s.lastError;
-    ss.getSheetByName('Info').getRange('B6').setValue(s.stage);
+    delete state.lastError;
+
     SpreadsheetApp.flush();
+    rememberAppendRows_(state, out);
+    saveState_(state);
 
-    Object.keys(s.committed).forEach(name => {
-      s.committed[name] = ss.getSheetByName(name).getLastRow();
-    });
+    out.getSheetByName('Info')
+      .getRange('B6')
+      .setValue(state.stage);
 
-    hhSaveState_(s);
-
-    if (s.stage === 'DONE') {
-      hhRemoveTriggers_();
-      console.log('Fertig: ' + ss.getUrl());
+    if (state.stage === 'DONE') {
+      removeTriggers_();
+      console.log(
+        'Gesamte Analyse fertig: ' + out.getUrl()
+      );
     }
 
   } catch (error) {
-    hhRemoveTriggers_();
+    removeTriggers_();
 
-    const committed = hhLoadState_();
+    // Nur den zuletzt bestätigten Zustand um die Fehlermeldung ergänzen.
+    const committed = loadState_();
+
     if (committed) {
       committed.lastError = String(error);
-      hhSaveState_(committed);
+      saveState_(committed);
     }
 
-    console.error(error && error.stack ? error.stack : String(error));
+    console.error(error);
     throw error;
 
   } finally {
@@ -389,891 +529,974 @@ function hdduWeiter() {
   }
 }
 
-function hdduStatus() {
-  const s = hhLoadState_();
-  console.log(JSON.stringify(s, null, 2));
-
-  if (s) {
-    console.log('https://docs.google.com/spreadsheets/d/' + s.outputId);
-  }
-
-  return s;
-}
-
+/**
+ * Nach behobenem Fehler oder nach Quotenreset ausführen.
+ */
 function hdduFortsetzen() {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
 
   try {
-    const s = hhLoadState_();
+    const state = loadState_();
 
-    if (!s || s.stage === 'DONE') {
-      throw new Error('Keine unvollständige Analyse vorhanden.');
+    if (!state || state.stage === 'DONE') {
+      throw new Error(
+        'Keine unvollständige Analyse vorhanden.'
+      );
     }
 
-    if (s.signature !== hhSignature_()) {
-      throw new Error('Konfiguration wurde geändert.');
-    }
+    delete state.lastError;
+    saveState_(state);
 
-    delete s.lastError;
-    hhSaveState_(s);
-    hhRemoveTriggers_();
-    hhCreateTrigger_();
+    removeTriggers_();
 
-    console.log('Fortsetzung aktiviert: ' + s.stage);
+    ScriptApp.newTrigger('hdduWeiter')
+      .timeBased()
+      .everyMinutes(1)
+      .create();
+
+    console.log(
+      'Fortsetzung aktiviert. Aktuelle Stufe: ' + state.stage
+    );
+
   } finally {
     lock.releaseLock();
   }
 }
 
-function hdduPause() {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    hhRemoveTriggers_();
-    console.log('Pausiert. Zustand bleibt erhalten.');
-  } finally {
-    lock.releaseLock();
+function hdduStatus() {
+  const state = loadState_();
+  console.log(JSON.stringify(state, null, 2));
+
+  if (state) {
+    console.log(
+      'https://docs.google.com/spreadsheets/d/' +
+      state.outputId
+    );
   }
+
+  return state;
 }
 
 function hdduStop() {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
+
   try {
-    hhRemoveTriggers_();
-    PropertiesService.getScriptProperties().deleteProperty(HH.STATE_KEY);
-    console.log('Arbeitszustand verworfen. Ergebnisdateien bleiben erhalten.');
+    removeTriggers_();
+
+    /*
+     * Ergebnisdateien bleiben erhalten.
+     * Der Arbeitszustand wird verworfen.
+     */
+    PropertiesService.getScriptProperties()
+      .deleteProperty(HD.STATE_KEY);
+
+    console.log(
+      'Analyse gestoppt. Bereits erzeugte Ergebnisdateien bleiben erhalten.'
+    );
+
   } finally {
     lock.releaseLock();
   }
 }
 
-function hhCreateTrigger_() {
-  ScriptApp.newTrigger('hdduWeiter').timeBased().everyMinutes(5).create();
-}
-
-function hhRemoveTriggers_() {
-  ScriptApp.getProjectTriggers().forEach(t => {
-    if (t.getHandlerFunction() === 'hdduWeiter') {
-      ScriptApp.deleteTrigger(t);
+function removeTriggers_() {
+  ScriptApp.getProjectTriggers().forEach(trigger => {
+    if (trigger.getHandlerFunction() === 'hdduWeiter') {
+      ScriptApp.deleteTrigger(trigger);
     }
   });
 }
 
-function hhLoadState_() {
+function loadState_() {
   const text = PropertiesService.getScriptProperties()
-    .getProperty(HH.STATE_KEY);
+    .getProperty(HD.STATE_KEY);
+
   return text ? JSON.parse(text) : null;
 }
 
-function hhSaveState_(s) {
-  const text = JSON.stringify(s);
-
-  // Apps-Script-Properties haben ein begrenztes Einzelwertvolumen.
-  // Vorläufige Koeffizienten werden deshalb in einem Blatt gespeichert.
-  if (Utilities.newBlob(text).getBytes().length > 8500) {
-    throw new Error('Arbeitszustand zu groß für Script Properties.');
-  }
-
-  PropertiesService.getScriptProperties().setProperty(HH.STATE_KEY, text);
+function saveState_(state) {
+  PropertiesService.getScriptProperties()
+    .setProperty(
+      HD.STATE_KEY,
+      JSON.stringify(state)
+    );
 }
 
-function hhSignature_() {
-  return JSON.stringify({
-    algorithm: 'hamburg-gesla-v4-1',
-    config: HH,
-    terms: HH_TERMS
+function rememberAppendRows_(state, out) {
+  const names = [
+    'Info',
+    'Extrema',
+    'Zuordnung',
+    'Koeffizienten',
+    'Diagnostik'
+  ];
+
+  state.committedRows = {};
+
+  for (const name of names) {
+    const sheet = out.getSheetByName(name);
+
+    if (sheet) {
+      state.committedRows[name] = sheet.getLastRow();
+    }
+  }
+}
+
+function restoreAppendRows_(state, out) {
+  if (!state.committedRows) return;
+
+  for (const name of Object.keys(state.committedRows)) {
+    const sheet = out.getSheetByName(name);
+    if (!sheet) continue;
+
+    const committed = state.committedRows[name];
+    const actual = sheet.getLastRow();
+
+    if (actual > committed) {
+      sheet.getRange(
+        committed + 1,
+        1,
+        actual - committed,
+        sheet.getMaxColumns()
+      ).clearContent();
+    }
+  }
+}
+
+// ============================================================
+// Tabellen und Quellenzugriff
+// ============================================================
+
+function sourceSheet_(source) {
+  if (!source) {
+    throw new Error('Quellendefinition fehlt.');
+  }
+
+  const ss = SpreadsheetApp.openById(source.id);
+  const sheet = ss.getSheets()
+    .find(s => s.getSheetId() === source.gid);
+
+  if (!sheet) {
+    throw new Error(
+      'Quellblatt nicht gefunden: ' +
+      source.label +
+      ', GID ' +
+      source.gid
+    );
+  }
+
+  return sheet;
+}
+
+function buildSourceManifest_() {
+  let previousEnd = null;
+
+  return HD_SOURCES.map(source => {
+    const start = Date.parse(source.firstUTC);
+    const end = Date.parse(source.endUTC);
+
+    if (
+      !Number.isFinite(start) ||
+      !Number.isFinite(end) ||
+      end <= start
+    ) {
+      throw new Error('Ungültige Quellengrenzen.');
+    }
+
+    if (
+      previousEnd !== null &&
+      start !== previousEnd
+    ) {
+      throw new Error(
+        'Quellenintervalle sind nicht lückenlos definiert.'
+      );
+    }
+
+    previousEnd = end;
+
+    const offset =
+      (start - HD.FIRST_UTC) / MINUTE;
+
+    const capacity =
+      (end - start) / MINUTE;
+
+    if (
+      !Number.isInteger(offset) ||
+      !Number.isInteger(capacity)
+    ) {
+      throw new Error(
+        'Quellenzeiten liegen nicht im Minutenraster.'
+      );
+    }
+
+    const sheet = sourceSheet_(source);
+
+    const actual = Math.max(
+      0,
+      sheet.getLastRow() - HD.FIRST_ROW + 1
+    );
+
+    /*
+     * Zusatzzeilen hinter der nominalen Zeitgrenze werden
+     * dokumentiert, aber nicht der nächsten Quelle zugeschlagen.
+     *
+     * Fehlende Endzeilen bleiben zeitlich fehlend.
+     */
+    return Object.assign({}, source, {
+      offset: offset,
+      capacity: capacity,
+      actual: actual,
+      available: Math.min(actual, capacity)
+    });
   });
 }
 
-function hhCheckConfig_() {
-  if (
-    !HH.SOURCE_FILE_ID ||
-    HH.SOURCE_FILE_ID.indexOf('HIER_') === 0 ||
-    HH_TERMS.length !== 39 ||
-    !Number.isInteger(HH.CURVE_POINTS) ||
-    HH.CURVE_POINTS < 96 ||
-    HH.CURVE_POINTS > 288 ||
-    HH.STEP_MINUTES !== 10 ||
-    !HH.ACCEPT_QC.length ||
-    HH.ACCEPT_QC.some(q => ![0, 1, 2].includes(q))
-  ) {
-    throw new Error('Konfiguration prüfen, insbesondere SOURCE_FILE_ID.');
-  }
-}
-
-/* ============================================================
- * Tabellen
- * ============================================================ */
-
-function hhResize_(sheet, rows, columns) {
-  if (sheet.getMaxColumns() > columns) {
-    sheet.deleteColumns(columns + 1, sheet.getMaxColumns() - columns);
-  }
-  if (sheet.getMaxColumns() < columns) {
-    sheet.insertColumnsAfter(
-      sheet.getMaxColumns(), columns - sheet.getMaxColumns()
+function ensureSheetSize_(sheet, rows, columns) {
+  if (rows > sheet.getMaxRows()) {
+    sheet.insertRowsAfter(
+      sheet.getMaxRows(),
+      rows - sheet.getMaxRows()
     );
   }
-  if (sheet.getMaxRows() < rows) {
-    sheet.insertRowsAfter(sheet.getMaxRows(), rows - sheet.getMaxRows());
+
+  if (columns > sheet.getMaxColumns()) {
+    sheet.insertColumnsAfter(
+      sheet.getMaxColumns(),
+      columns - sheet.getMaxColumns()
+    );
   }
 }
 
-function hhNewSheet_(ss, name, headers) {
+function createSheet_(ss, name, headers) {
   const sheet = ss.insertSheet(name);
-  hhResize_(sheet, 2, headers.length);
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+  ensureSheetSize_(sheet, 2, headers.length);
+
+  // Überflüssige Spalten reduzieren den verfügbaren Zellenvorrat.
+  if (sheet.getMaxColumns() > headers.length) {
+    sheet.deleteColumns(
+      headers.length + 1,
+      sheet.getMaxColumns() - headers.length
+    );
+  }
+
+  sheet.getRange(
+    1, 1, 1, headers.length
+  ).setValues([headers]);
+
   sheet.setFrozenRows(1);
   return sheet;
 }
 
-function hhWrite_(sheet, firstRow, rows) {
+function appendRows_(sheet, rows) {
   if (!rows.length) return;
-  hhResize_(sheet, firstRow + rows.length - 1, rows[0].length);
-  sheet.getRange(firstRow, 1, rows.length, rows[0].length).setValues(rows);
-}
 
-function hhAppend_(sheet, rows) {
-  hhWrite_(sheet, sheet.getLastRow() + 1, rows);
-}
+  const first = sheet.getLastRow() + 1;
+  const needed = first + rows.length - 1;
 
-function hhRollbackAppends_(ss, s) {
-  Object.keys(s.committed).forEach(name => {
-    const sh = ss.getSheetByName(name);
-    const count = sh.getLastRow() - s.committed[name];
-    if (count > 0) {
-      sh.getRange(
-        s.committed[name] + 1, 1, count, sh.getMaxColumns()
-      ).clearContent();
-    }
-  });
-}
-
-/* ============================================================
- * Byteweises Lesen der großen Drive-Textdatei
- *
- * Kein vollständiges Laden der Datei in den Arbeitsspeicher.
- * Der gespeicherte Offset liegt immer hinter einem LF.
- * ============================================================ */
-
-function hhReadByteBlock_(source, offset) {
-  const last = Math.min(source.size - 1, offset + HH.CHUNK_BYTES - 1);
-
-  const response = UrlFetchApp.fetch(
-    'https://www.googleapis.com/drive/v3/files/' +
-      encodeURIComponent(source.id) + '?alt=media',
-    {
-      method: 'get',
-      headers: {
-        Authorization: 'Bearer ' + ScriptApp.getOAuthToken(),
-        Range: 'bytes=' + offset + '-' + last
-      },
-      muteHttpExceptions: true
-    }
+  ensureSheetSize_(
+    sheet,
+    needed,
+    rows[0].length
   );
 
-  const code = response.getResponseCode();
-  const bytes = response.getContent();
+  sheet.getRange(
+    first,
+    1,
+    rows.length,
+    rows[0].length
+  ).setValues(rows);
+}
 
-  if (code === 206) {
-    const headers = response.getAllHeaders();
-    const key = Object.keys(headers).find(
-      k => k.toLowerCase() === 'content-range'
+/**
+ * Liest [first, last) in absoluten Minutenindizes.
+ * Fehlende Daten bleiben NaN.
+ *
+ * Es werden nur Zeilen gelesen, die tatsächlich vorhanden
+ * und dem jeweiligen nominalen Quellenintervall zugeordnet sind.
+ */
+function readMinuteRange_(state, first, last) {
+  if (
+    !Number.isInteger(first) ||
+    !Number.isInteger(last) ||
+    last < first
+  ) {
+    throw new Error('Ungültiger Minutenbereich.');
+  }
+
+  const result = new Float64Array(last - first);
+  result.fill(NaN);
+
+  for (const source of state.sources) {
+    const left = Math.max(
+      first,
+      source.offset
     );
-    const value = key ? String(headers[key]) : '';
-    const m = value.match(/^bytes (\d+)-(\d+)\/(\d+)$/i);
+
+    const right = Math.min(
+      last,
+      source.offset + source.available
+    );
+
+    if (right <= left) continue;
+
+    const values = sourceSheet_(source)
+      .getRange(
+        HD.FIRST_ROW + left - source.offset,
+        HD.LEVEL_COLUMN,
+        right - left,
+        1
+      )
+      .getValues();
+
+    for (let i = 0; i < values.length; i++) {
+      result[left - first + i] =
+        numericLevel_(values[i][0]);
+    }
+  }
+
+  return result;
+}
+
+// ============================================================
+// Messwertkonvertierung und Scheitelpunkterkennung
+// ============================================================
+
+function numericLevel_(value) {
+  if (value === '' || value === null) {
+    return NaN;
+  }
+
+  let x;
+
+  if (typeof value === 'number') {
+    x = value;
+
+  } else if (typeof value === 'string') {
+    // Dezimalkomma erlaubt, Tausendertrennzeichen nicht.
+    const text = value.trim().replace(',', '.');
 
     if (
-      !m ||
-      Number(m[1]) !== offset ||
-      Number(m[2]) !== last ||
-      Number(m[3]) !== source.size ||
-      bytes.length !== last - offset + 1
+      !/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(text)
     ) {
-      throw new Error('Unerwartete Content-Range-Antwort von Drive.');
-    }
-  } else if (!(
-    code === 200 &&
-    offset === 0 &&
-    source.size <= HH.CHUNK_BYTES &&
-    bytes.length === source.size
-  )) {
-    throw new Error(
-      'Drive-Bereichsabruf fehlgeschlagen, HTTP ' + code +
-      '. Unkomprimierte normale Textdatei und Berechtigungen prüfen.'
-    );
-  }
-
-  let used = bytes.length;
-  const fileEnd = offset + bytes.length === source.size;
-
-  if (!fileEnd) {
-    while (used > 0 && bytes[used - 1] !== 10) used--;
-    if (!used) throw new Error('Keine vollständige Zeile im Leseblock.');
-  }
-
-  return {
-    text: Utilities.newBlob(bytes.slice(0, used))
-      .getDataAsString('UTF-8'),
-    next: offset + used
-  };
-}
-
-/* ============================================================
- * GESLA-Parser
- * ============================================================ */
-
-function hhParseHeader_(text) {
-  const h = {};
-  let foundData = false;
-
-  const mappings = [
-    ['FORMAT VERSION', 'format'],
-    ['SITE NAME', 'site'],
-    ['SITE CODE', 'code'],
-    ['TIME ZONE HOURS', 'timezone'],
-    ['DATUM INFORMATION', 'datum'],
-    ['NULL VALUE', 'nullValue'],
-    ['START DATE/TIME', 'start'],
-    ['END DATE/TIME', 'end'],
-    ['LATITUDE', 'latitude'],
-    ['LONGITUDE', 'longitude'],
-    ['CONTRIBUTOR', 'contributor']
-  ];
-
-  for (let line of text.replace(/^\uFEFF/, '').split('\n')) {
-    line = line.trim();
-    if (!line) continue;
-
-    if (!line.startsWith('#')) {
-      foundData = true;
-      break;
+      return NaN;
     }
 
-    const body = line.slice(1).trim();
+    x = Number(text);
 
-    for (const [label, key] of mappings) {
-      if (body.startsWith(label + ' ')) {
-        // WEBSITE/CONTACT sind keine Contributor-Bezeichnung.
-        if (
-          key === 'contributor' &&
-          /^CONTRIBUTOR (WEBSITE|CONTACT)\b/.test(body)
-        ) {
-          continue;
-        }
-        h[key] = body.slice(label.length).trim();
-      }
-    }
+  } else {
+    return NaN;
   }
 
-  if (!foundData) {
-    throw new Error('GESLA-Kopf zu lang oder keine Daten im ersten Block.');
-  }
+  if (!Number.isFinite(x)) return NaN;
+  if (HD.INVALID_LEVELS.includes(x)) return NaN;
 
-  return h;
+  return x;
 }
 
-function hhValidateHeader_(h) {
-  if (!h.format || !/^5\.0(?:\s|$)/.test(h.format)) {
-    throw new Error('GESLA FORMAT VERSION 5.0 erwartet.');
-  }
+function extractBlock_(state, out) {
+  const coreStart = state.next;
 
-  if (h.site !== HH.EXPECTED_SITE || h.code !== HH.EXPECTED_CODE) {
-    throw new Error('Quelldatei gehört nicht zur konfigurierten Station.');
-  }
-
-  if (h.timezone === undefined || Number(h.timezone) !== 0) {
-    throw new Error('Diese Fassung erwartet GESLA TIME ZONE HOURS 0.');
-  }
-
-  if (h.datum !== HH.EXPECTED_DATUM) {
-    throw new Error('Unerwarteter Höhenbezug: ' + h.datum);
-  }
-
-  if (
-    h.nullValue === undefined ||
-    !Number.isFinite(Number(h.nullValue))
-  ) {
-    throw new Error('NULL VALUE fehlt oder ist ungültig.');
-  }
-
-  const start = hhGeslaTime_(h.start);
-  const end = hhGeslaTime_(h.end);
-
-  if (
-    end <= start ||
-    start % HH_STEP !== 0 ||
-    end % HH_STEP !== 0
-  ) {
-    throw new Error('Ungültige Start-/Endangabe im Dateikopf.');
-  }
-}
-
-function hhGeslaTime_(text) {
-  if (
-    typeof text !== 'string' ||
-    !/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/.test(text)
-  ) {
-    throw new Error('Ungültige GESLA-Zeit: ' + text);
-  }
-
-  return hhParseUTC_(text.replace(/\//g, '-').replace(' ', 'T') + 'Z');
-}
-
-function hhParseGeslaRow_(line, header, location) {
-  const m = line.trim().match(
-    /^(\d{4}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s+([0-5])\s+([01])$/
+  const coreEnd = Math.min(
+    state.count,
+    coreStart + HD.READ_BLOCK
   );
 
-  if (!m) {
-    throw new Error(location + ': Ungültige GESLA-Datenzeile: ' + line);
+  const margin =
+    HD.EXTREME_HALF +
+    HD.SMOOTH_HALF +
+    HD.MAX_PLATEAU_MIN +
+    10;
+
+  const readStart = Math.max(
+    state.begin,
+    coreStart - margin
+  );
+
+  const readEnd = Math.min(
+    state.count,
+    coreEnd + margin
+  );
+
+  const values = readMinuteRange_(
+    state,
+    readStart,
+    readEnd
+  );
+
+  const smooth = smoothComplete_(
+    values,
+    HD.SMOOTH_HALF
+  );
+
+  const maxima = rollingExtreme_(
+    smooth,
+    HD.EXTREME_HALF,
+    true
+  );
+
+  const minima = rollingExtreme_(
+    smooth,
+    HD.EXTREME_HALF,
+    false
+  );
+
+  const result = collectPeaks_(
+    smooth,
+    maxima,
+    true,
+    readStart,
+    coreStart,
+    coreEnd
+  ).concat(
+    collectPeaks_(
+      smooth,
+      minima,
+      false,
+      readStart,
+      coreStart,
+      coreEnd
+    )
+  );
+
+  result.sort((a, b) => a[0] - b[0]);
+
+  appendRows_(
+    out.getSheetByName('Extrema'),
+    result
+  );
+
+  state.next = coreEnd;
+
+  if (coreEnd >= state.count) {
+    state.stage = 'ESTIMATE';
   }
-
-  const time = hhGeslaTime_(m[1] + ' ' + m[2]);
-  const level = Number(m[3]);
-  const qc = Number(m[4]);
-  const use = Number(m[5]);
-
-  if (!Number.isFinite(level)) {
-    throw new Error(location + ': Nicht endlicher Wasserstand.');
-  }
-
-  if (time % HH_STEP !== 0) {
-    throw new Error(
-      location + ': Zeitstempel liegt nicht im 10-Minuten-UTC-Raster. ' +
-      'Diese Fassung verarbeitet keinen abweichenden Messrhythmus.'
-    );
-  }
-
-  const isNull = Math.abs(level - Number(header.nullValue)) < 1e-10;
-  const valid = !isNull && use === 1 && HH.ACCEPT_QC.includes(qc);
-
-  return { time: time, level: level, qc: qc, use: use,
-    isNull: isNull, valid: valid };
 }
 
-function hhImportBlock_(ss, s) {
-  const file = DriveApp.getFileById(s.source.id);
+/*
+ * Zentrierte Glättung.
+ * Unvollständige Fenster bleiben ungültig.
+ */
+function smoothComplete_(a, half) {
+  const n = a.length;
 
-  if (
-    file.getSize() !== s.source.size ||
-    file.getLastUpdated().getTime() !== s.source.modified
-  ) {
-    throw new Error('Quelldatei wurde während des Imports verändert.');
+  const sum = new Float64Array(n + 1);
+  const count = new Int32Array(n + 1);
+
+  for (let i = 0; i < n; i++) {
+    const valid = Number.isFinite(a[i]);
+
+    sum[i + 1] =
+      sum[i] + (valid ? a[i] : 0);
+
+    count[i + 1] =
+      count[i] + (valid ? 1 : 0);
   }
 
-  const block = hhReadByteBlock_(s.source, s.byteOffset);
-  const lines = block.text.replace(/^\uFEFF/, '').split('\n');
+  const result = new Float64Array(n);
+  result.fill(NaN);
 
-  // Ein abschließendes LF erzeugt keinen zusätzlichen physischen Datensatz.
-  if (lines[lines.length - 1] === '') lines.pop();
+  const width = 2 * half + 1;
 
-  const selected = [];
+  for (let i = half; i < n - half; i++) {
+    const left = i - half;
+    const right = i + half + 1;
 
-  for (const rawLine of lines) {
-    s.physicalLines++;
-    const line = rawLine.trim();
+    if (
+      count[right] - count[left] === width
+    ) {
+      result[i] =
+        (sum[right] - sum[left]) / width;
+    }
+  }
 
-    if (!line) continue;
+  return result;
+}
 
-    if (line.startsWith('#')) {
-      if (s.previousTime !== null) {
-        throw new Error('Unerwarteter Kommentar/Header innerhalb der Daten.');
+/*
+ * Laufendes Maximum/Minimum mit monotoner Warteschlange.
+ */
+function rollingExtreme_(a, half, maximum) {
+  const n = a.length;
+  const width = 2 * half + 1;
+
+  const result = new Float64Array(n);
+  result.fill(NaN);
+
+  const queue = new Int32Array(n);
+
+  let head = 0;
+  let tail = 0;
+  let validCount = 0;
+
+  for (let right = 0; right < n; right++) {
+    const leaving = right - width;
+
+    if (
+      leaving >= 0 &&
+      Number.isFinite(a[leaving])
+    ) {
+      validCount--;
+    }
+
+    while (
+      head < tail &&
+      queue[head] <= leaving
+    ) {
+      head++;
+    }
+
+    if (Number.isFinite(a[right])) {
+      validCount++;
+
+      while (head < tail) {
+        const previous = a[queue[tail - 1]];
+
+        const remove = maximum
+          ? previous <= a[right]
+          : previous >= a[right];
+
+        if (!remove) break;
+        tail--;
       }
+
+      queue[tail++] = right;
+    }
+
+    if (
+      right >= width - 1 &&
+      validCount === width
+    ) {
+      result[right - half] = a[queue[head]];
+    }
+  }
+
+  return result;
+}
+
+function collectPeaks_(
+  a,
+  extreme,
+  maximum,
+  readStart,
+  coreStart,
+  coreEnd
+) {
+  const rows = [];
+  const w = HD.EXTREME_HALF;
+
+  for (let i = w; i < a.length - w; i++) {
+    if (
+      !Number.isFinite(extreme[i]) ||
+      a[i] !== extreme[i]
+    ) {
       continue;
     }
 
-    const r = hhParseGeslaRow_(
-      line, s.header, 'Zeile ' + s.physicalLines
+    const start = i;
+
+    while (
+      i + 1 < a.length - w &&
+      Number.isFinite(extreme[i + 1]) &&
+      a[i + 1] === extreme[i + 1]
+    ) {
+      i++;
+    }
+
+    const end = i;
+
+    if (
+      end - start + 1 > HD.MAX_PLATEAU_MIN
+    ) {
+      continue;
+    }
+
+    const centre =
+      Math.floor((start + end) / 2);
+
+    const globalIndex =
+      readStart + centre;
+
+    if (
+      globalIndex < coreStart ||
+      globalIndex >= coreEnd
+    ) {
+      continue;
+    }
+
+    const goodFlanks = maximum
+      ? (
+        a[centre] > a[centre - w] &&
+        a[centre] > a[centre + w]
+      )
+      : (
+        a[centre] < a[centre - w] &&
+        a[centre] < a[centre + w]
+      );
+
+    if (!goodFlanks) continue;
+
+    let offset =
+      (start + end) / 2 - centre;
+
+    let level = a[centre];
+
+    // Lokale Parabelverfeinerung bei Einzelmaximum/-minimum.
+    if (start === end) {
+      const d = 5;
+
+      const left = a[centre - d];
+      const right = a[centre + d];
+
+      const curvature =
+        left - 2 * level + right;
+
+      if (
+        Number.isFinite(curvature) &&
+        curvature !== 0 &&
+        (maximum ? curvature < 0 : curvature > 0)
+      ) {
+        const candidate =
+          d * (left - right) / (2 * curvature);
+
+        if (Math.abs(candidate) <= d) {
+          offset = candidate;
+
+          level -=
+            (right - left) * (right - left) /
+            (8 * curvature);
+        }
+      }
+    }
+
+    rows.push([
+      HD.FIRST_UTC +
+        (globalIndex + offset) * MINUTE,
+      maximum ? 'HW' : 'NW',
+      level
+    ]);
+  }
+
+  return rows;
+}
+
+// ============================================================
+// Mittlerer Mond und wahre Mondtransite
+// ============================================================
+
+function meanUpper_(n) {
+  return HD.T0 +
+    HD.SYNC_MINUTES * MINUTE +
+    n * HD.MOON_DAY_H * HOUR;
+}
+
+function meanHalf_(q) {
+  return meanUpper_(0) +
+    q * HD.MOON_DAY_H * HOUR / 2;
+}
+
+function requireAstronomy_() {
+  const required = [
+    'AstroTime',
+    'GeoMoon',
+    'Rotation_EQJ_EQD',
+    'RotateVector',
+    'EquatorFromVector',
+    'SiderealTime'
+  ];
+
+  if (typeof Astronomy === 'undefined') {
+    throw new Error(
+      'Astronomy Engine fehlt. ' +
+      'Browser-Build mit globalem Objekt Astronomy bereitstellen.'
     );
-
-    if (
-      r.time < s.nominalStart ||
-      r.time > s.nominalLast
-    ) {
-      throw new Error('Messzeit liegt außerhalb der Header-Grenzen.');
-    }
-
-    if (s.previousTime !== null) {
-      const difference = r.time - s.previousTime;
-
-      if (difference <= 0) {
-        throw new Error(
-          'Doppelter oder nicht chronologischer UTC-Zeitstempel: ' +
-          hhIso_(r.time)
-        );
-      }
-
-      if (difference % HH_STEP !== 0) {
-        throw new Error('Unvereinbarer Messrhythmus.');
-      }
-
-      s.missingSlots += difference / HH_STEP - 1;
-      if (difference !== HH_STEP) s.nonTenMinuteSteps++;
-    } else {
-      s.firstTime = r.time;
-    }
-
-    s.previousTime = r.time;
-    s.imported++;
-    s.qcCounts[r.qc]++;
-    if (r.use === 0) s.useZero++;
-    if (r.isNull) s.nullCount++;
-    if (r.valid) s.accepted++;
-
-    if (r.time >= s.start && r.time < s.end) {
-      selected.push([r.time, r.valid ? r.level : '']);
-      s.selected++;
-      if (r.valid) s.selectedAccepted++;
-    }
   }
 
-  if (selected.length) {
-    const raw = ss.getSheetByName('Rohdaten');
-    const firstRow = raw.getLastRow() + 1;
-
-    hhWrite_(raw, firstRow, selected);
-    hhAppend_(ss.getSheetByName('Zeitindex'), [[
-      firstRow,
-      selected.length,
-      selected[0][0],
-      selected[selected.length - 1][0]
-    ]]);
-  }
-
-  s.byteOffset = block.next;
-
-  if (s.byteOffset === s.source.size) {
-    if (
-      s.firstTime !== s.nominalStart ||
-      s.previousTime !== s.nominalLast
-    ) {
+  for (const name of required) {
+    if (typeof Astronomy[name] !== 'function') {
       throw new Error(
-        'Tatsächlicher Dateianfang/-schluss stimmt nicht mit dem Header überein. ' +
-        'Möglicherweise wurde nur ein Dateiausschnitt hochgeladen.'
+        'Astronomy-Funktion fehlt: ' + name
       );
     }
-
-    if (s.selectedAccepted < 10000) {
-      throw new Error('Zu wenige gültige Messwerte im Analysezeitraum.');
-    }
-
-    const capacity = (s.end - s.start) / HH_STEP;
-
-    hhWrite_(ss.getSheetByName('Import_Diagnostik'), 2, [
-      ['Physische Zeilen', s.physicalLines],
-      ['Zeitstempel gesamte Datei', s.imported],
-      ['Akzeptierte Werte gesamte Datei', s.accepted],
-      ['Fehlende Rasterpositionen intern gesamte Datei', s.missingSlots],
-      ['Abstände größer als 10 Minuten', s.nonTenMinuteSteps],
-      ['QC-Zählung 0 bis 5', JSON.stringify(s.qcCounts)],
-      ['Use-in-analysis = 0', s.useZero],
-      ['NULL-Werte', s.nullCount],
-      ['Soll-Rasterpositionen Analyse', capacity],
-      ['Zeitstempel Analyse', s.selected],
-      ['Fehlende Zeitstempel Analyse', capacity - s.selected],
-      ['Akzeptierte Messwerte Analyse', s.selectedAccepted],
-      ['Abgelehnte Messwerte Analyse', s.selected - s.selectedAccepted],
-      ['Gültige Belegung Analyse', s.selectedAccepted / capacity],
-      ['Erste Messzeit UTC', hhIso_(s.firstTime)],
-      ['Letzte Messzeit UTC', hhIso_(s.previousTime)]
-    ]);
-
-    s.nextTime = s.start;
-    s.stage = 'EXTRACT';
   }
 }
 
-/* ============================================================
- * Rasterleser
- * ============================================================ */
-
-function hhTimeIndex_(ss) {
-  if (HH_INDEX_CACHE) return HH_INDEX_CACHE;
-
-  const sh = ss.getSheetByName('Zeitindex');
-  const count = sh.getLastRow() - 1;
-
-  if (count < 1) throw new Error('Zeitindex fehlt.');
-
-  HH_INDEX_CACHE = sh.getRange(2, 1, count, 4).getValues()
-    .map(r => ({
-      row: Number(r[0]),
-      count: Number(r[1]),
-      first: Number(r[2]),
-      last: Number(r[3])
-    }));
-
-  return HH_INDEX_CACHE;
-}
-
-function hhReadGrid_(ss, s, from, to) {
-  if (
-    to < from ||
-    (from - s.start) % HH_STEP !== 0 ||
-    (to - from) % HH_STEP !== 0
-  ) {
-    throw new Error('Ungültiger Rasterlesebereich.');
-  }
-
-  const values = new Float64Array((to - from) / HH_STEP);
-  values.fill(NaN);
-
-  if (!values.length) return values;
-
-  for (const e of hhTimeIndex_(ss)) {
-    if (e.last < from || e.first >= to) continue;
-
-    let rows = HH_RAW_CACHE.get(e.row);
-
-    if (!rows) {
-      rows = ss.getSheetByName('Rohdaten')
-        .getRange(e.row, 1, e.count, 2).getValues();
-
-      if (HH_RAW_CACHE.size >= 4) {
-        HH_RAW_CACHE.delete(HH_RAW_CACHE.keys().next().value);
-      }
-
-      HH_RAW_CACHE.set(e.row, rows);
-    }
-
-    for (const r of rows) {
-      const time = Number(r[0]);
-      if (time < from || time >= to) continue;
-
-      const i = (time - from) / HH_STEP;
-
-      if (!Number.isInteger(i)) {
-        throw new Error('Rohdaten enthalten einen rasterfremden Zeitstempel.');
-      }
-
-      values[i] = typeof r[1] === 'number' && Number.isFinite(r[1])
-        ? r[1] : NaN;
-    }
-  }
-
-  return values;
-}
-
-function hhInterpolateGrid_(values, from, time) {
-  const position = (time - from) / HH_STEP;
-  const nearest = Math.round(position);
-
-  if (Math.abs(position - nearest) < 1e-10) {
-    return nearest >= 0 && nearest < values.length
-      ? values[nearest] : NaN;
-  }
-
-  const left = Math.floor(position);
-  if (left < 0 || left + 1 >= values.length) return NaN;
-
-  const a = values[left];
-  const b = values[left + 1];
-
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return NaN;
-
-  return a + (position - left) * (b - a);
-}
-
-/* ============================================================
- * Extrema auf dem 10-Minuten-Raster
- *
- * Keine künstliche Erzeugung von Minutenmessungen.
- * Keine gleitende Mittelung: Sie könnte besonders NW abflachen.
- *
- * Lokale Parabel durch drei Originalstützstellen, wenn der
- * Scheitel eindeutig ist. Plateaus: zeitliche Mitte.
- * ============================================================ */
-
-function hhExtractBlock_(ss, s) {
-  const coreStart = s.nextTime;
-  const coreEnd = Math.min(s.end, coreStart + HH.EXTRACT_DAYS * HH_DAY);
-
-  const margin = (
-    HH.EXTREME_HALF_MINUTES + HH.MAX_PLATEAU_MINUTES + 20
-  ) * HH_MINUTE;
-
-  const from = Math.max(s.start, coreStart - margin);
-  const to = Math.min(s.end, coreEnd + margin);
-  const a = hhReadGrid_(ss, s, from, to);
-  const half = HH.EXTREME_HALF_MINUTES / HH.STEP_MINUTES;
-  const rows = [];
-
-  for (const high of [true, false]) {
-    const candidates = new Uint8Array(a.length);
-
-    for (let i = half; i < a.length - half; i++) {
-      if (!Number.isFinite(a[i])) continue;
-
-      let good = true;
-
-      for (let j = i - half; j <= i + half; j++) {
-        if (
-          !Number.isFinite(a[j]) ||
-          (high ? a[j] > a[i] : a[j] < a[i])
-        ) {
-          good = false;
-          break;
-        }
-      }
-
-      if (good) candidates[i] = 1;
-    }
-
-    for (let i = half; i < a.length - half; i++) {
-      if (!candidates[i]) continue;
-
-      const first = i;
-      while (
-        i + 1 < a.length - half &&
-        candidates[i + 1] &&
-        a[i + 1] === a[first]
-      ) {
-        i++;
-      }
-      const last = i;
-
-      if ((last - first) * HH.STEP_MINUTES > HH.MAX_PLATEAU_MINUTES) {
-        continue;
-      }
-
-      const centre = Math.floor((first + last) / 2);
-      const value = a[centre];
-
-      if (!(high
-        ? value > a[centre - half] && value > a[centre + half]
-        : value < a[centre - half] && value < a[centre + half]
-      )) {
-        continue;
-      }
-
-      // Eigentümer des Ereignisses ist der Block seiner Rastermitte.
-      const centreTime = from + centre * HH_STEP;
-      if (centreTime < coreStart || centreTime >= coreEnd) continue;
-
-      let offset = (first + last) / 2 - centre;
-      let height = value;
-
-      if (first === last) {
-        const left = a[centre - 1];
-        const right = a[centre + 1];
-        const curvature = left - 2 * value + right;
-
-        if (high ? curvature < 0 : curvature > 0) {
-          const d = (left - right) / (2 * curvature);
-
-          if (Number.isFinite(d) && Math.abs(d) <= 0.5 + 1e-10) {
-            offset = d;
-            height = value -
-              (right - left) * (right - left) / (8 * curvature);
-          }
-        }
-      }
-
-      const eventTime = centreTime + offset * HH_STEP;
-      if (eventTime < s.start || eventTime >= s.end) continue;
-
-      rows.push([eventTime, high ? 'HW' : 'NW', height]);
-    }
-  }
-
-  rows.sort((a, b) => a[0] - b[0]);
-  hhAppend_(ss.getSheetByName('Extrema'), rows);
-
-  s.nextTime = coreEnd;
-  if (coreEnd >= s.end) s.stage = 'ESTIMATE';
-}
-
-/* ============================================================
- * Greenwich-Mondtransite
- * ============================================================ */
-
-function hhMeanUpper_(n) {
-  return HH.T0 + HH.SYNC_MINUTES * HH_MINUTE + n * HH_PERIOD;
-}
-
-function hhMeanHalf_(q) {
-  return hhMeanUpper_(0) + q * HH_PERIOD / 2;
-}
-
-function hhRequireAstronomy_() {
-  if (typeof Astronomy === 'undefined') {
-    throw new Error('Astronomy Engine fehlt.');
-  }
-
-  [
-    'AstroTime', 'GeoMoon', 'Rotation_EQJ_EQD',
-    'RotateVector', 'EquatorFromVector', 'SiderealTime'
-  ].forEach(name => {
-    if (typeof Astronomy[name] !== 'function') {
-      throw new Error('Astronomy-Funktion fehlt: ' + name);
-    }
-  });
-}
-
-function hhWrap180_(x) {
+function wrap180_(x) {
   return ((x + 180) % 360 + 360) % 360 - 180;
 }
 
-function hhMoonAngle_(ms) {
-  const time = new Astronomy.AstroTime(new Date(ms));
-  const eqj = Astronomy.GeoMoon(time);
-  const eqd = Astronomy.RotateVector(
-    Astronomy.Rotation_EQJ_EQD(time), eqj
-  );
-  const equatorial = Astronomy.EquatorFromVector(eqd);
+/*
+ * Geozentrischer scheinbarer Stundenwinkel in Greenwich.
+ * RA und Sternzeit beziehen sich auf das Datum.
+ */
+function moonHourAngle_(ms) {
+  const time =
+    new Astronomy.AstroTime(new Date(ms));
 
-  return hhWrap180_(
-    15 * (Astronomy.SiderealTime(time) - equatorial.ra)
+  const eqj =
+    Astronomy.GeoMoon(time);
+
+  const rotation =
+    Astronomy.Rotation_EQJ_EQD(time);
+
+  const eqd =
+    Astronomy.RotateVector(rotation, eqj);
+
+  const equatorial =
+    Astronomy.EquatorFromVector(eqd);
+
+  return wrap180_(
+    15 * (
+      Astronomy.SiderealTime(time) -
+      equatorial.ra
+    )
   );
 }
 
-function hhTrueTransit_(q, cache) {
-  if (cache.has(q)) return cache.get(q);
+/*
+ * q = 2*n     : oberer Transit
+ * q = 2*n + 1 : nachfolgender unterer Transit
+ */
+function trueTransit_(q, cache) {
+  const key = String(q);
+
+  if (
+    cache &&
+    Object.prototype.hasOwnProperty.call(cache, key)
+  ) {
+    return cache[key];
+  }
 
   const lower = ((q % 2) + 2) % 2;
   const target = lower ? 180 : 0;
-  let time = hhMeanHalf_(q);
 
-  for (let i = 0; i < 10; i++) {
-    const error = hhWrap180_(hhMoonAngle_(time) - target);
-    const delta = 5 * HH_MINUTE;
-    const speed = hhWrap180_(
-      hhMoonAngle_(time + delta) - hhMoonAngle_(time - delta)
-    ) / (2 * delta / HH_HOUR);
+  let time = meanHalf_(q);
+
+  for (let iteration = 0; iteration < 10; iteration++) {
+    const error = wrap180_(
+      moonHourAngle_(time) - target
+    );
+
+    const delta = 5 * MINUTE;
+
+    const speed = wrap180_(
+      moonHourAngle_(time + delta) -
+      moonHourAngle_(time - delta)
+    ) / (2 * delta / HOUR);
 
     if (!(speed > 10 && speed < 20)) {
-      throw new Error('Unplausible Mond-Stundenwinkelgeschwindigkeit.');
+      throw new Error(
+        'Unplausible Mond-Stundenwinkelgeschwindigkeit.'
+      );
     }
 
-    const correction = error / speed * HH_HOUR;
+    const correction =
+      error / speed * HOUR;
+
     time -= correction;
 
-    if (Math.abs(correction) < 100) break;
+    if (Math.abs(correction) < 100) {
+      break;
+    }
   }
+
+  const residual = Math.abs(
+    wrap180_(
+      moonHourAngle_(time) - target
+    )
+  );
 
   if (
-    Math.abs(hhWrap180_(hhMoonAngle_(time) - target)) > 0.001 ||
-    Math.abs(time - hhMeanHalf_(q)) > 4 * HH_HOUR
+    residual > 0.001 ||
+    Math.abs(time - meanHalf_(q)) > 4 * HOUR
   ) {
-    throw new Error('Mondtransit nicht sicher bestimmt: q=' + q);
+    throw new Error(
+      'Mondtransit nicht sicher bestimmt, q=' + q
+    );
   }
 
-  cache.set(q, time);
+  if (cache) cache[key] = time;
   return time;
 }
 
-/* ============================================================
- * Intervallschätzung und Zuordnung
- * ============================================================ */
+// ============================================================
+// Schätzung der Intervallzweige und Ereigniszuordnung
+// ============================================================
 
-function hhCircularLag_(rows, branch) {
-  if (!rows.length) throw new Error('Keine Ereignisse zur Intervallschätzung.');
+function estimateLags_(state, out) {
+  const sheet = out.getSheetByName('Extrema');
+  const count = sheet.getLastRow() - 1;
 
-  const halfHours = HH.MOON_DAY_HOURS / 2;
-  let c = 0;
-  let s = 0;
+  if (count < 200) {
+    throw new Error(
+      'Zu wenige erkannte Scheitelpunkte.'
+    );
+  }
 
-  rows.forEach(r => {
-    const hours = (Number(r[0]) - hhMeanUpper_(0)) / HH_HOUR;
-    const angle = 2 * Math.PI * hours / halfHours;
-    c += Math.cos(angle);
-    s += Math.sin(angle);
-  });
+  const rows = sheet
+    .getRange(2, 1, count, 3)
+    .getValues();
 
-  let lag = Math.atan2(s, c) * halfHours / (2 * Math.PI);
-  lag += Math.round((branch - lag) / halfHours) * halfHours;
+  const highs = rows.filter(r => r[1] === 'HW');
+  const lows = rows.filter(r => r[1] === 'NW');
 
-  return {
-    lag: lag,
-    coherence: Math.hypot(c, s) / rows.length
-  };
-}
-
-function hhEstimate_(ss, s) {
-  const sh = ss.getSheetByName('Extrema');
-  const count = sh.getLastRow() - 1;
-
-  if (count < 400) throw new Error('Zu wenige erkannte Extrema.');
-
-  const rows = sh.getRange(2, 1, count, 3).getValues();
-  const hw = hhCircularLag_(
-    rows.filter(r => r[1] === 'HW'), HH.HW_BRANCH_HOURS
-  );
-  const nw = hhCircularLag_(
-    rows.filter(r => r[1] === 'NW'),
-    hw.lag + HH.MOON_DAY_HOURS / 4
+  const hw = circularLag_(
+    highs,
+    HD.HW_LAG_BRANCH_H
   );
 
-  if (hw.coherence < 0.5 || nw.coherence < 0.5) {
-    throw new Error('Unzureichende halbtägige Phasenkohärenz.');
+  const nw = circularLag_(
+    lows,
+    hw.lag + HD.MOON_DAY_H / 4
+  );
+
+  if (
+    hw.coherence < 0.5 ||
+    nw.coherence < 0.5
+  ) {
+    throw new Error(
+      'Keine ausreichend eindeutige halbtägige Scheitelpunktfolge. ' +
+      'Daten, Fehlwerte und Erkennungsparameter prüfen.'
+    );
   }
 
   const ebb = nw.lag - hw.lag;
+
   if (!(ebb > 2 && ebb < 11)) {
-    throw new Error('Unplausible mittlere Dauer HW -> NW.');
+    throw new Error(
+      'Unplausibler Abstand HW → NW: ' +
+      ebb + ' Stunden.'
+    );
   }
 
-  s.hwLag = hw.lag;
-  s.nwLag = nw.lag;
-  s.extremaCount = count;
-  s.nextEvent = 0;
-  s.assignedCount = 0;
-  s.stage = 'ASSIGN';
+  state.hwLag = hw.lag;
+  state.nwLag = nw.lag;
+  state.extremaCount = count;
+  state.nextEvent = 0;
+  state.stage = 'ASSIGN';
 
-  hhWrite_(ss.getSheetByName('Info'), 14, [
-    ['Geschätztes HW-Intervall h', hw.lag],
-    ['Geschätztes NW-Intervall h', nw.lag],
-    ['HW-Phasenkohärenz', hw.coherence],
-    ['NW-Phasenkohärenz', nw.coherence],
-    ['Mittlere Dauer HW -> NW h', ebb],
-    ['Extrema', count]
-  ]);
+  appendRows_(
+    out.getSheetByName('Info'),
+    [
+      ['Geschätztes HW-Intervall h', hw.lag],
+      ['Geschätztes NW-Intervall h', nw.lag],
+      ['HW Phasenkohärenz', hw.coherence],
+      ['NW Phasenkohärenz', nw.coherence]
+    ]
+  );
 }
 
-function hhAssignBlock_(ss, s) {
-  hhRequireAstronomy_();
+function circularLag_(rows, branchCentre) {
+  const halfH = HD.MOON_DAY_H / 2;
 
-  const size = Math.min(HH.ASSIGN_BLOCK, s.extremaCount - s.nextEvent);
-  const rows = ss.getSheetByName('Extrema')
-    .getRange(2 + s.nextEvent, 1, size, 3).getValues();
+  let cosine = 0;
+  let sine = 0;
 
-  const cache = new Map();
-  const output = [];
+  for (const row of rows) {
+    const hours =
+      (Number(row[0]) - meanUpper_(0)) / HOUR;
+
+    const angle =
+      2 * Math.PI * hours / halfH;
+
+    cosine += Math.cos(angle);
+    sine += Math.sin(angle);
+  }
+
+  let lag =
+    Math.atan2(sine, cosine) *
+    halfH / (2 * Math.PI);
+
+  lag +=
+    Math.round((branchCentre - lag) / halfH) *
+    halfH;
+
+  return {
+    lag: lag,
+    coherence:
+      Math.hypot(cosine, sine) /
+      Math.max(1, rows.length)
+  };
+}
+
+function assignBlock_(state, out) {
+  const size = Math.min(
+    HD.ASSIGN_BLOCK,
+    state.extremaCount - state.nextEvent
+  );
+
+  const rows = out.getSheetByName('Extrema')
+    .getRange(
+      2 + state.nextEvent,
+      1,
+      size,
+      3
+    )
+    .getValues();
+
+  const cache = {};
+  const assigned = [];
+
+  const halfMs =
+    HD.MOON_DAY_H * HOUR / 2;
 
   for (const row of rows) {
     const time = Number(row[0]);
     const high = row[1] === 'HW';
-    const lag = high ? s.hwLag : s.nwLag;
 
-    const initial = Math.round(
-      (time - hhMeanUpper_(0) - lag * HH_HOUR) / (HH_PERIOD / 2)
+    const lag = high
+      ? state.hwLag
+      : state.nwLag;
+
+    const initialQ = Math.round(
+      (
+        time -
+        meanUpper_(0) -
+        lag * HOUR
+      ) / halfMs
     );
 
     let best = null;
 
-    for (let q = initial - 1; q <= initial + 1; q++) {
-      const transit = hhTrueTransit_(q, cache);
-      const error = Math.abs((time - transit) / HH_HOUR - lag);
+    for (
+      let q = initialQ - 1;
+      q <= initialQ + 1;
+      q++
+    ) {
+      const transit = trueTransit_(q, cache);
+
+      const error = Math.abs(
+        (time - transit) / HOUR - lag
+      );
 
       if (!best || error < best.error) {
-        best = { q: q, transit: transit, error: error };
+        best = {
+          q: q,
+          transit: transit,
+          error: error
+        };
       }
     }
 
-    if (best.error > HH.MAX_ASSIGN_ERROR_HOURS) continue;
+    if (
+      best.error > HD.MAX_ASSIGN_ERROR_H
+    ) {
+      continue;
+    }
 
     const n = Math.floor(best.q / 2);
     const lower = best.q - 2 * n;
-    const k = 1 + 2 * lower + (high ? 0 : 1);
 
-    output.push([
+    const k =
+      1 + 2 * lower + (high ? 0 : 1);
+
+    assigned.push([
       best.q,
       n,
       k,
-      (time - hhMeanUpper_(n)) / HH_HOUR,
+      (time - meanUpper_(n)) / HOUR,
       Number(row[2]),
       time,
       best.transit,
@@ -1281,290 +1504,367 @@ function hhAssignBlock_(ss, s) {
     ]);
   }
 
-  hhAppend_(ss.getSheetByName('Zuordnung'), output);
-  s.assignedCount += output.length;
-  s.nextEvent += size;
-
-  if (s.nextEvent >= s.extremaCount) {
-    s.stage = 'PEAK_FIT';
-    s.fitK = 1;
-    s.fitPhase = 'TRAIN_FIRST';
-
-    hhWrite_(ss.getSheetByName('Info'), 21, [
-      ['Zugeordnete Extrema', s.assignedCount],
-      ['Nicht zugeordnete Extrema', s.extremaCount - s.assignedCount]
-    ]);
-  }
-}
-
-function hhPeakRows_(ss, k) {
-  const sh = ss.getSheetByName('Zuordnung');
-  const count = sh.getLastRow() - 1;
-
-  if (count < 400) throw new Error('Zu wenige zugeordnete Extrema.');
-
-  const all = sh.getRange(2, 1, count, 8).getValues();
-  const unique = new Map();
-
-  for (const r of all) {
-    const event = {
-      n: Number(r[1]),
-      k: Number(r[2]),
-      y: [Number(r[3]), Number(r[4])],
-      time: Number(r[5]),
-      score: Number(r[7])
-    };
-
-    const key = event.n + ':' + event.k;
-    if (!unique.has(key) || event.score < unique.get(key).score) {
-      unique.set(key, event);
-    }
-  }
-
-  const invalid = new Set();
-
-  for (const [key, event] of unique) {
-    if (event.k !== 1 && event.k !== 3) continue;
-
-    const lowKey = event.n + ':' + (event.k + 1);
-    const low = unique.get(lowKey);
-
-    if (low) {
-      const duration = (low.time - event.time) / HH_HOUR;
-      if (!(duration > 2 && duration < 11)) {
-        invalid.add(key);
-        invalid.add(lowKey);
-      }
-    }
-  }
-
-  return Array.from(unique.entries())
-    .filter(([key, event]) => event.k === k && !invalid.has(key))
-    .map(([, event]) => event)
-    .sort((a, b) => a.n - b.n);
-}
-
-/* ============================================================
- * Statistik, Gliederauswahl, QR-Ausgleichung
- * ============================================================ */
-
-function hhStats_(values) {
-  if (!values.length) throw new Error('Leere statistische Stichprobe.');
-
-  const mean = values.reduce((sum, x) => sum + x, 0) / values.length;
-  const variance = values.reduce(
-    (sum, x) => sum + (x - mean) * (x - mean), 0
-  ) / Math.max(1, values.length - 1);
-
-  return { mean: mean, sd: Math.sqrt(variance) };
-}
-
-function hhInside3_(x, stat) {
-  return Math.abs(x - stat.mean) <= Math.max(3 * stat.sd, 1e-10);
-}
-
-function hhRMSE_(values) {
-  if (!values.length) return null;
-  return Math.sqrt(
-    values.reduce((sum, x) => sum + x * x, 0) / values.length
+  appendRows_(
+    out.getSheetByName('Zuordnung'),
+    assigned
   );
+
+  state.nextEvent += size;
+
+  if (
+    state.nextEvent >= state.extremaCount
+  ) {
+    state.stage = 'FIT';
+    state.nextK = 1;
+  }
 }
 
-function hhSelectTerms_(rows) {
-  if (rows.length < 2) throw new Error('Zu wenige Beobachtungen.');
+// ============================================================
+// Konstituentenauswahl, Statistik und Ausgleichung
+// ============================================================
 
-  const span = rows[rows.length - 1].n - rows[0].n;
-  if (!(span > 60)) throw new Error('Zu kurze Transitspanne.');
+function transitBounds_(rows) {
+  let min = Infinity;
+  let max = -Infinity;
+
+  for (const row of rows) {
+    min = Math.min(min, row.n);
+    max = Math.max(max, row.n);
+  }
+
+  return { min: min, max: max };
+}
+
+/*
+ * Rangbasierte Auswahl aus den 39 Gliedern.
+ *
+ * Auflösungskriterium:
+ *   resolution = 360 / Transitspanne
+ *
+ * Auch die Trennbarkeit vom konstanten Glied wird geprüft.
+ */
+function selectTerms_(rows) {
+  const bounds = transitBounds_(rows);
+  const span = bounds.max - bounds.min;
+
+  if (!(span > 60)) {
+    throw new Error(
+      'Zu kurze Zeitspanne für die HDdU-Ausgleichung.'
+    );
+  }
 
   const resolution = 360 / span;
   const selected = [];
 
-  for (const term of HH_TERMS.slice().sort((a, b) => a[2] - b[2])) {
-    if (term[1] < resolution) continue;
+  const ranked = HD_TERMS.slice()
+    .sort((a, b) => a[2] - b[2]);
 
-    if (selected.every(other =>
-      Math.abs(term[1] - other[1]) >= resolution
-    )) {
+  for (const term of ranked) {
+    if (term[1] < resolution) {
+      continue;
+    }
+
+    if (
+      selected.every(other =>
+        Math.abs(term[1] - other[1]) >= resolution
+      )
+    ) {
       selected.push(term);
     }
   }
 
-  return selected.sort((a, b) => a[1] - b[1]);
+  return selected.sort(
+    (a, b) => a[1] - b[1]
+  );
 }
 
-function hhDesign_(n, terms) {
+function designRow_(n, terms) {
   const row = [1];
 
   for (const term of terms) {
-    const angle = ((term[1] * n) % 360) * HH_RAD;
-    row.push(Math.cos(angle), Math.sin(angle));
+    const angle =
+      ((term[1] * n) % 360) * RAD;
+
+    row.push(
+      Math.cos(angle),
+      Math.sin(angle)
+    );
   }
 
   return row;
 }
 
-function hhEvaluate_(n, terms, coefficients) {
+function evaluate_(n, terms, coefficients) {
   let result = coefficients[0];
 
   for (let j = 0; j < terms.length; j++) {
-    const angle = ((terms[j][1] * n) % 360) * HH_RAD;
-    result += coefficients[1 + 2 * j] * Math.cos(angle);
-    result += coefficients[2 + 2 * j] * Math.sin(angle);
-  }
+    const angle =
+      ((terms[j][1] * n) % 360) * RAD;
 
-  if (!Number.isFinite(result)) {
-    throw new Error('Nicht endliches Modellergebnis.');
+    result +=
+      coefficients[1 + 2 * j] *
+      Math.cos(angle);
+
+    result +=
+      coefficients[2 + 2 * j] *
+      Math.sin(angle);
   }
 
   return result;
 }
 
-function hhInitialFilter_(rows) {
-  if (!rows.length) throw new Error('Leere Modellreihe.');
-
-  const dimensions = rows[0].y.length;
-  const stats = [];
-
-  for (let d = 0; d < dimensions; d++) {
-    stats.push(hhStats_(rows.map(r => r.y[d])));
+function stats_(a) {
+  if (!a.length) {
+    return {
+      mean: NaN,
+      sd: NaN
+    };
   }
 
-  return rows.filter(r =>
-    r.y.every((value, d) => hhInside3_(value, stats[d]))
-  );
-}
+  const mean =
+    a.reduce((sum, x) => sum + x, 0) /
+    a.length;
 
-function hhFit_(rows, terms) {
-  const p = 1 + 2 * terms.length;
-
-  if (rows.length < Math.max(100, 3 * p)) {
-    throw new Error('Zu wenige Beobachtungen für den gewählten Gliedersatz.');
-  }
-
-  const matrix = hhQR_(
-    rows.map(r => hhDesign_(r.n, terms)),
-    rows.map(r => r.y)
-  );
-
-  const dimensions = rows[0].y.length;
-  const coefficients = [];
-
-  for (let d = 0; d < dimensions; d++) {
-    coefficients.push(matrix.map(r => r[d]));
-  }
-
-  return coefficients;
-}
-
-function hhFirstFit_(rows) {
-  const used = hhInitialFilter_(rows);
-  const terms = hhSelectTerms_(used);
+  const variance = a.reduce(
+    (sum, x) => sum + (x - mean) * (x - mean),
+    0
+  ) / Math.max(1, a.length - 1);
 
   return {
-    terms: terms,
-    coefficients: hhFit_(used, terms)
+    mean: mean,
+    sd: Math.sqrt(variance)
   };
 }
 
-function hhSecondFit_(rows, first) {
-  let used = hhInitialFilter_(rows);
-  const dimensions = used[0].y.length;
+function inside3_(x, stat) {
+  return Math.abs(x - stat.mean) <=
+    Math.max(3 * stat.sd, 1e-10);
+}
 
-  const residuals = used.map(r =>
-    r.y.map((value, d) =>
-      value - hhEvaluate_(r.n, first.terms, first.coefficients[d])
-    )
+function fitPair_(rows, terms) {
+  const a = rows.map(
+    r => designRow_(r.n, terms)
   );
 
-  const stats = [];
-
-  for (let d = 0; d < dimensions; d++) {
-    stats.push(hhStats_(residuals.map(r => r[d])));
-  }
-
-  used = used.filter((r, i) =>
-    residuals[i].every((value, d) => hhInside3_(value, stats[d]))
+  const b = rows.map(
+    r => [r.interval, r.height]
   );
 
-  const terms = hhSelectTerms_(used);
-  const coefficients = hhFit_(used, terms);
+  const coefficients =
+    qrLeastSquares_(a, b);
+
+  return {
+    time: coefficients.map(r => r[0]),
+    height: coefficients.map(r => r[1])
+  };
+}
+
+function robustFit_(rows) {
+  const tStats = stats_(
+    rows.map(r => r.interval)
+  );
+
+  const hStats = stats_(
+    rows.map(r => r.height)
+  );
+
+  let used = rows.filter(r =>
+    inside3_(r.interval, tStats) &&
+    inside3_(r.height, hStats)
+  );
+
+  let terms = selectTerms_(used);
+  checkSampleSize_(used, terms);
+
+  const first = fitPair_(used, terms);
+
+  const timeResiduals = used.map(r =>
+    r.interval -
+    evaluate_(r.n, terms, first.time)
+  );
+
+  const heightResiduals = used.map(r =>
+    r.height -
+    evaluate_(r.n, terms, first.height)
+  );
+
+  const tr = stats_(timeResiduals);
+  const hr = stats_(heightResiduals);
+
+  used = used.filter((r, index) =>
+    inside3_(timeResiduals[index], tr) &&
+    inside3_(heightResiduals[index], hr)
+  );
+
+  terms = selectTerms_(used);
+  checkSampleSize_(used, terms);
+
+  const finalFit = fitPair_(used, terms);
+
+  const timeErrors = used.map(r =>
+    r.interval -
+    evaluate_(r.n, terms, finalFit.time)
+  );
+
+  const heightErrors = used.map(r =>
+    r.height -
+    evaluate_(r.n, terms, finalFit.height)
+  );
+
+  const bounds = transitBounds_(used);
 
   return {
     terms: terms,
-    coefficients: coefficients,
+    time: finalFit.time,
+    height: finalFit.height,
     usedCount: used.length,
-    nMin: used[0].n,
-    nMax: used[used.length - 1].n,
-    rmse: coefficients.map((c, d) =>
-      hhRMSE_(used.map(r => r.y[d] - hhEvaluate_(r.n, terms, c)))
-    )
+    nMin: bounds.min,
+    nMax: bounds.max,
+    trainingTimeRMSEmin:
+      60 * rmse_(timeErrors),
+    trainingHeightRMSE:
+      rmse_(heightErrors)
   };
 }
 
-/**
- * Householder-QR, mehrere rechte Seiten.
- * Keine Normalgleichungen.
+function checkSampleSize_(rows, terms) {
+  const parameters =
+    1 + 2 * terms.length;
+
+  if (
+    rows.length <
+    Math.max(100, 3 * parameters)
+  ) {
+    throw new Error(
+      'Zu wenige verwertbare Beobachtungen für ' +
+      terms.length +
+      ' Konstituenten.'
+    );
+  }
+}
+
+/*
+ * Householder-QR für mehrere rechte Seiten.
+ * Kein Bilden von A' A.
  */
-function hhQR_(inputA, inputB) {
-  if (!inputA.length || inputA.length !== inputB.length) {
-    throw new Error('Ungültige Ausgleichungsdimensionen.');
+function qrLeastSquares_(inputA, inputB) {
+  if (
+    !inputA.length ||
+    inputA.length !== inputB.length
+  ) {
+    throw new Error(
+      'Ungültige Dimensionen der Ausgleichung.'
+    );
   }
 
-  const a = inputA.map(r => Float64Array.from(r));
-  const b = inputB.map(r => Float64Array.from(r));
+  const a = inputA.map(
+    row => Float64Array.from(row)
+  );
+
+  const b = inputB.map(
+    row => Float64Array.from(row)
+  );
+
   const m = a.length;
   const p = a[0].length;
   const rhs = b[0].length;
-  const tolerance = 1e-9 * Math.sqrt(m);
 
-  if (m < p) throw new Error('Unterbestimmtes Ausgleichungssystem.');
+  if (m < p) {
+    throw new Error(
+      'Unterbestimmtes Ausgleichungssystem.'
+    );
+  }
+
+  const rankTolerance =
+    1e-9 * Math.sqrt(m);
 
   for (let k = 0; k < p; k++) {
     let norm2 = 0;
-    for (let i = k; i < m; i++) norm2 += a[i][k] * a[i][k];
+
+    for (let i = k; i < m; i++) {
+      norm2 += a[i][k] * a[i][k];
+    }
 
     const norm = Math.sqrt(norm2);
 
-    if (!Number.isFinite(norm) || norm < tolerance) {
+    if (
+      !Number.isFinite(norm) ||
+      norm < rankTolerance
+    ) {
       throw new Error(
-        'Numerisch nicht trennbare Modellspalten. Datenabdeckung prüfen.'
+        'Numerisch nicht trennbare Modellspalten. ' +
+        'Datenabdeckung oder Konstituentenauswahl prüfen.'
       );
     }
 
-    const alpha = a[k][k] >= 0 ? -norm : norm;
-    const v = new Float64Array(m - k);
+    const alpha =
+      a[k][k] >= 0 ? -norm : norm;
+
+    const v =
+      new Float64Array(m - k);
+
     v[0] = a[k][k] - alpha;
 
-    for (let i = k + 1; i < m; i++) v[i - k] = a[i][k];
+    for (let i = k + 1; i < m; i++) {
+      v[i - k] = a[i][k];
+    }
 
     let vv = 0;
-    for (let i = 0; i < v.length; i++) vv += v[i] * v[i];
+
+    for (let i = 0; i < v.length; i++) {
+      vv += v[i] * v[i];
+    }
+
     const beta = 2 / vv;
 
     for (let j = k; j < p; j++) {
       let dot = 0;
-      for (let i = k; i < m; i++) dot += v[i - k] * a[i][j];
+
+      for (let i = k; i < m; i++) {
+        dot += v[i - k] * a[i][j];
+      }
+
       dot *= beta;
-      for (let i = k; i < m; i++) a[i][j] -= dot * v[i - k];
+
+      for (let i = k; i < m; i++) {
+        a[i][j] -= dot * v[i - k];
+      }
     }
 
     for (let j = 0; j < rhs; j++) {
       let dot = 0;
-      for (let i = k; i < m; i++) dot += v[i - k] * b[i][j];
+
+      for (let i = k; i < m; i++) {
+        dot += v[i - k] * b[i][j];
+      }
+
       dot *= beta;
-      for (let i = k; i < m; i++) b[i][j] -= dot * v[i - k];
+
+      for (let i = k; i < m; i++) {
+        b[i][j] -= dot * v[i - k];
+      }
     }
 
     a[k][k] = alpha;
-    for (let i = k + 1; i < m; i++) a[i][k] = 0;
+
+    for (let i = k + 1; i < m; i++) {
+      a[i][k] = 0;
+    }
   }
 
-  const x = Array.from({ length: p }, () => new Array(rhs).fill(0));
+  const x = Array.from(
+    { length: p },
+    () => new Array(rhs).fill(0)
+  );
 
   for (let j = 0; j < rhs; j++) {
     for (let i = p - 1; i >= 0; i--) {
       let value = b[i][j];
-      for (let k = i + 1; k < p; k++) value -= a[i][k] * x[k][j];
+
+      for (let k = i + 1; k < p; k++) {
+        value -= a[i][k] * x[k][j];
+      }
+
       x[i][j] = value / a[i][i];
     }
   }
@@ -1572,518 +1872,2083 @@ function hhQR_(inputA, inputB) {
   return x;
 }
 
-/* ============================================================
- * Fortsetzbare Modellanpassung
- *
- * Je Modell vier Schritte:
- *   TRAIN_FIRST, TRAIN_SECOND, FINAL_FIRST, FINAL_SECOND.
- *
- * Testdaten: zeitlich letzte 20 % der Transitspanne.
- * Die Testbeobachtungen werden nicht anhand des Testfehlers
- * nachträglich bereinigt. Sturmbeeinflusste QC-gültige Werte
- * bleiben in den Testkennzahlen enthalten.
- * ============================================================ */
-
-function hhSaveWork_(ss, value) {
-  hhWrite_(ss.getSheetByName('Arbeitsmodell'), 2, [
-    ['Arbeitsmodell', JSON.stringify(value)]
-  ]);
+function rmse_(errors) {
+  return Math.sqrt(
+    errors.reduce(
+      (sum, x) => sum + x * x,
+      0
+    ) / Math.max(1, errors.length)
+  );
 }
 
-function hhLoadWork_(ss, s, curve) {
-  const text = ss.getSheetByName('Arbeitsmodell').getRange('B2').getValue();
-  if (!text) throw new Error('Vorläufiges Modell fehlt.');
+// ============================================================
+// Scheitelpunktmodelle erstellen und speichern
+// ============================================================
 
-  const work = JSON.parse(text);
+function fitNextClass_(state, out) {
+  const sheet =
+    out.getSheetByName('Zuordnung');
 
-  if (work.k !== s.fitK || work.curve !== curve) {
-    throw new Error('Vorläufiges Modell gehört zu einem anderen Arbeitsschritt.');
-  }
+  const count =
+    sheet.getLastRow() - 1;
 
-  return work;
-}
-
-function hhFitStep_(ss, s, curve) {
-  const rows = curve
-    ? hhCurveRows_(ss, s)
-    : hhPeakRows_(ss, s.fitK);
-
-  if (rows.length < 200) {
+  if (count < 400) {
     throw new Error(
-      'Zu wenige Daten für ' + (curve ? 'Ganglinie ' : 'Scheitelklasse ') +
-      s.fitK
+      'Zu wenige zugeordnete Scheitelpunkte.'
     );
   }
 
-  const cutoff = rows[0].n +
-    0.8 * (rows[rows.length - 1].n - rows[0].n);
+  const all = sheet
+    .getRange(2, 1, count, 8)
+    .getValues();
 
-  const train = rows.filter(r => r.n <= cutoff);
-  const test = rows.filter(r => r.n > cutoff);
+  /*
+   * Pro (Transitnummer, k) nur ein Scheitel.
+   * Bei mehreren Kandidaten gewinnt die zeitlich plausibelste
+   * Zuordnung.
+   */
+  const unique = new Map();
 
-  switch (s.fitPhase) {
-    case 'TRAIN_FIRST': {
-      const work = {
-        k: s.fitK,
-        curve: curve,
-        validation: { n: 0, rmse: [], bias: [], terms: null }
-      };
+  for (const row of all) {
+    const key =
+      row[1] + ':' + row[2];
 
-      if (train.length >= 200 && test.length >= 40) {
-        work.first = hhFirstFit_(train);
-        s.fitPhase = 'TRAIN_SECOND';
-      } else {
-        s.fitPhase = 'FINAL_FIRST';
-      }
+    const event = {
+      n: Number(row[1]),
+      k: Number(row[2]),
+      interval: Number(row[3]),
+      height: Number(row[4]),
+      time: Number(row[5]),
+      score: Number(row[7])
+    };
 
-      hhSaveWork_(ss, work);
-      return;
+    if (
+      !unique.has(key) ||
+      event.score < unique.get(key).score
+    ) {
+      unique.set(key, event);
+    }
+  }
+
+  /*
+   * Vorhandene HW/NW-Paare auf Reihenfolge prüfen.
+   * Fehlende Partner sind erlaubt.
+   */
+  const invalid = new Set();
+
+  for (const [key, event] of unique) {
+    if (
+      event.k !== 1 &&
+      event.k !== 3
+    ) {
+      continue;
     }
 
-    case 'TRAIN_SECOND': {
-      const work = hhLoadWork_(ss, s, curve);
-      const fit = hhSecondFit_(train, work.first);
-      const errors = fit.coefficients.map((c, d) =>
-        test.map(r => r.y[d] - hhEvaluate_(r.n, fit.terms, c))
+    const lowKey =
+      event.n + ':' + (event.k + 1);
+
+    const low = unique.get(lowKey);
+
+    if (low) {
+      const duration =
+        (low.time - event.time) / HOUR;
+
+      if (
+        !(duration > 2 && duration < 11)
+      ) {
+        invalid.add(key);
+        invalid.add(lowKey);
+      }
+    }
+  }
+
+  const k = state.nextK;
+
+  const rows = Array.from(unique.entries())
+    .filter(([key, event]) =>
+      event.k === k &&
+      !invalid.has(key)
+    )
+    .map(([, event]) => event)
+    .sort((a, b) => a.n - b.n);
+
+  if (rows.length < 200) {
+    throw new Error(
+      'Zu wenige Daten für Ereignisklasse k=' + k
+    );
+  }
+
+  /*
+   * Zeitlicher Test:
+   * frühe 80 % der Transitspanne zum Lernen,
+   * spätere 20 % zum Testen.
+   *
+   * Testdaten werden nicht anhand ihres Vorhersageresiduums
+   * bereinigt.
+   */
+  const minN = rows[0].n;
+  const maxN = rows[rows.length - 1].n;
+
+  const cutoff =
+    minN + 0.8 * (maxN - minN);
+
+  const train = rows.filter(
+    r => r.n <= cutoff
+  );
+
+  const test = rows.filter(
+    r => r.n > cutoff
+  );
+
+  let validation = {
+    n: 0,
+    timeRMSEmin: null,
+    heightRMSE: null,
+    terms: null
+  };
+
+  if (
+    train.length >= 200 &&
+    test.length >= 40
+  ) {
+    const testModel = robustFit_(train);
+
+    validation = {
+      n: test.length,
+
+      timeRMSEmin: 60 * rmse_(
+        test.map(r =>
+          r.interval -
+          evaluate_(
+            r.n,
+            testModel.terms,
+            testModel.time
+          )
+        )
+      ),
+
+      heightRMSE: rmse_(
+        test.map(r =>
+          r.height -
+          evaluate_(
+            r.n,
+            testModel.terms,
+            testModel.height
+          )
+        )
+      ),
+
+      terms: testModel.terms.length
+    };
+  }
+
+  const fit = robustFit_(rows);
+
+  const model = {
+    version: 2,
+    basis: 'MEAN_UPPER_TRANSIT_2013',
+    k: k,
+
+    t0: HD.T0,
+    syncMinutes: HD.SYNC_MINUTES,
+    moonDayHours: HD.MOON_DAY_H,
+
+    terms: fit.terms,
+    time: fit.time,
+    height: fit.height,
+
+    nMin: fit.nMin,
+    nMax: fit.nMax,
+    usedCount: fit.usedCount,
+
+    inputStartUTC: iso_(rows[0].time),
+    inputEndUTC: iso_(rows[rows.length - 1].time),
+
+    trainingTimeRMSEmin:
+      fit.trainingTimeRMSEmin,
+
+    trainingHeightRMSE:
+      fit.trainingHeightRMSE,
+
+    validation: validation
+  };
+
+  out.getSheetByName('Modell')
+    .getRange(k + 1, 1, 1, 2)
+    .setValues([[
+      k,
+      JSON.stringify(model)
+    ]]);
+
+  appendRows_(
+    out.getSheetByName('Koeffizienten'),
+    coefficientRows_(model)
+  );
+
+  appendRows_(
+    out.getSheetByName('Diagnostik'),
+    [[
+      k,
+      rows.length,
+      fit.usedCount,
+      fit.terms.length,
+      fit.trainingTimeRMSEmin,
+      fit.trainingHeightRMSE,
+      validation.n,
+
+      validation.timeRMSEmin === null
+        ? ''
+        : validation.timeRMSEmin,
+
+      validation.heightRMSE === null
+        ? ''
+        : validation.heightRMSE,
+
+      validation.terms === null
+        ? ''
+        : validation.terms
+    ]]
+  );
+
+  state.nextK++;
+
+  if (state.nextK > 4) {
+    state.stage = 'CURVE_INIT';
+
+    appendRows_(
+      out.getSheetByName('Info'),
+      [
+        [
+          'Scheitelpunktmodelle fertig UTC',
+          iso_(Date.now())
+        ],
+        [
+          'Nächster Schritt',
+          'Ganglinienanalyse aus den minütlichen Messwerten.'
+        ]
+      ]
+    );
+  }
+}
+
+function coefficientRows_(model) {
+  const rows = [];
+
+  for (const item of [
+    ['Zeit_h', model.time],
+    ['Hoehe_Originaleinheit', model.height]
+  ]) {
+    const name = item[0];
+    const coefficients = item[1];
+
+    rows.push([
+      model.k,
+      name,
+      'MITTEL',
+      0,
+      coefficients[0],
+      0,
+      '',
+      ''
+    ]);
+
+    model.terms.forEach((term, j) => {
+      const a = coefficients[1 + 2 * j];
+      const b = coefficients[2 + 2 * j];
+
+      // a*cos(theta)+b*sin(theta) = A*cos(theta-phase)
+      const phase = (
+        Math.atan2(b, a) / RAD + 360
+      ) % 360;
+
+      rows.push([
+        model.k,
+        name,
+        term[0],
+        term[1],
+        a,
+        b,
+        Math.hypot(a, b),
+        phase
+      ]);
+    });
+  }
+
+  return rows;
+}
+
+// ============================================================
+// Ganglinienanalyse
+// ============================================================
+
+/*
+ * Raster:
+ *
+ * t(n,k) = meanUpper(n) + MHWI + (k - 1/2) * Mondtag / K
+ *
+ * Für K=96:
+ * erste Stützstelle 1/8 Mondstunde nach dem um MHWI
+ * verschobenen mittleren oberen Transit.
+ *
+ * Die Anwendung der 39 Glieder auf diese Ganglinienerweiterung
+ * kombiniert die beiden Quellen. Der neuere Aufsatz selbst
+ * validiert den Satz anhand von HW/NW.
+ */
+
+function curveInitialize_(state, out) {
+  const points = state.curvePoints;
+
+  const moonDayMs =
+    HD.MOON_DAY_H * HOUR;
+
+  const stepMs =
+    moonDayMs / points;
+
+  const originMs =
+    meanUpper_(0) +
+    state.hwLag * HOUR +
+    stepMs / 2;
+
+  const nFirst = Math.floor(
+    (state.analysisStart - originMs) /
+    moonDayMs
+  );
+
+  const nLast = Math.floor(
+    (state.analysisEnd - 1 - originMs) /
+    moonDayMs
+  );
+
+  let samples =
+    out.getSheetByName('Ganglinie_Daten');
+
+  if (!samples) {
+    const headers = ['Transitnummer_n'];
+
+    for (let k = 1; k <= points; k++) {
+      headers.push('Wasserstand_k' + k);
+    }
+
+    samples = createSheet_(
+      out,
+      'Ganglinie_Daten',
+      headers
+    );
+  }
+
+  ensureSheetSize_(
+    samples,
+    nLast - nFirst + 2,
+    points + 1
+  );
+
+  if (
+    !out.getSheetByName('Ganglinie_Modell')
+  ) {
+    createSheet_(
+      out,
+      'Ganglinie_Modell',
+      ['k', 'JSON']
+    );
+  }
+
+  ensureSheetSize_(
+    out.getSheetByName('Ganglinie_Modell'),
+    points + 1,
+    2
+  );
+
+  if (
+    !out.getSheetByName('Ganglinie_Diagnostik')
+  ) {
+    createSheet_(
+      out,
+      'Ganglinie_Diagnostik',
+      [
+        'k',
+        'Vorhanden',
+        'Verwendet',
+        'Glieder',
+        'Anpassungs_RMSE_Originaleinheit',
+        'Test_N',
+        'Test_RMSE_Originaleinheit',
+        'Test_Bias_Originaleinheit',
+        'Test_Glieder',
+        'Belegung_Anteil'
+      ]
+    );
+  }
+
+  ensureSheetSize_(
+    out.getSheetByName('Ganglinie_Diagnostik'),
+    points + 1,
+    10
+  );
+
+  if (
+    !out.getSheetByName('Ganglinie_Meta')
+  ) {
+    createSheet_(
+      out,
+      'Ganglinie_Meta',
+      ['Eigenschaft', 'JSON']
+    );
+  }
+
+  state.curve = {
+    version: 2,
+    complete: false,
+
+    points: points,
+    moonDayMs: moonDayMs,
+    stepMs: stepMs,
+    originMs: originMs,
+    hwLagHours: state.hwLag,
+
+    t0: HD.T0,
+    syncMinutes: HD.SYNC_MINUTES,
+    moonDayHours: HD.MOON_DAY_H,
+
+    nFirst: nFirst,
+    nLast: nLast,
+
+    analysisStartUTC:
+      iso_(state.analysisStart),
+
+    analysisEndUTCExclusive:
+      iso_(state.analysisEnd),
+
+    interpolation: 'linear',
+    unit: 'Originaleinheit der Quellspalte B'
+  };
+
+  writeCurveMeta_(out, state.curve);
+
+  state.curveNextN = nFirst;
+  state.stage = 'CURVE_SAMPLE';
+}
+
+function writeCurveMeta_(out, meta) {
+  out.getSheetByName('Ganglinie_Meta')
+    .getRange(2, 1, 1, 2)
+    .setValues([[
+      'Metadaten',
+      JSON.stringify(meta)
+    ]]);
+}
+
+function curveSampleTime_(meta, n, k) {
+  return meta.originMs +
+    n * meta.moonDayMs +
+    (k - 1) * meta.stepMs;
+}
+
+function curveSampleBlock_(state, out) {
+  const meta = state.curve;
+
+  const firstN =
+    state.curveNextN;
+
+  const lastN = Math.min(
+    meta.nLast,
+    firstN + HD_CURVE.SAMPLE_DAYS - 1
+  );
+
+  const firstTime = curveSampleTime_(
+    meta,
+    firstN,
+    1
+  );
+
+  const lastTime = curveSampleTime_(
+    meta,
+    lastN,
+    meta.points
+  );
+
+  const readStart = Math.max(
+    state.begin,
+    Math.floor(
+      (firstTime - HD.FIRST_UTC) / MINUTE
+    )
+  );
+
+  const readEnd = Math.min(
+    state.count,
+    Math.ceil(
+      (lastTime - HD.FIRST_UTC) / MINUTE
+    ) + 1
+  );
+
+  const values = readMinuteRange_(
+    state,
+    readStart,
+    readEnd
+  );
+
+  const rows = [];
+
+  for (let n = firstN; n <= lastN; n++) {
+    const row = [n];
+
+    for (let k = 1; k <= meta.points; k++) {
+      const time = curveSampleTime_(
+        meta,
+        n,
+        k
       );
 
-      work.validation = {
+      if (
+        time < state.analysisStart ||
+        time >= state.analysisEnd
+      ) {
+        row.push('');
+        continue;
+      }
+
+      const position =
+        (time - HD.FIRST_UTC) / MINUTE;
+
+      const left =
+        Math.floor(position);
+
+      const fraction =
+        position - left;
+
+      let height = NaN;
+
+      if (
+        left >= readStart &&
+        left < readEnd
+      ) {
+        const a =
+          values[left - readStart];
+
+        if (fraction === 0) {
+          height = a;
+
+        } else if (left + 1 < readEnd) {
+          const b =
+            values[left + 1 - readStart];
+
+          if (
+            Number.isFinite(a) &&
+            Number.isFinite(b)
+          ) {
+            height =
+              a + fraction * (b - a);
+          }
+        }
+      }
+
+      row.push(
+        Number.isFinite(height)
+          ? height
+          : ''
+      );
+    }
+
+    rows.push(row);
+  }
+
+  /*
+   * Feste Zielzeilen:
+   * Wiederholung nach Abbruch erzeugt keine Duplikate.
+   */
+  out.getSheetByName('Ganglinie_Daten')
+    .getRange(
+      2 + firstN - meta.nFirst,
+      1,
+      rows.length,
+      meta.points + 1
+    )
+    .setValues(rows);
+
+  state.curveNextN =
+    lastN + 1;
+
+  if (
+    state.curveNextN > meta.nLast
+  ) {
+    state.curveK = 1;
+    state.curveFitStage = 'TRAIN_FIRST';
+    state.stage = 'CURVE_FIT';
+  }
+}
+
+function curveReadPhase_(state, out) {
+  const meta = state.curve;
+
+  const count =
+    meta.nLast - meta.nFirst + 1;
+
+  const values = out.getSheetByName('Ganglinie_Daten')
+    .getRange(
+      2,
+      state.curveK + 1,
+      count,
+      1
+    )
+    .getValues();
+
+  const rows = [];
+
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i][0];
+
+    if (
+      typeof value === 'number' &&
+      Number.isFinite(value)
+    ) {
+      rows.push({
+        n: meta.nFirst + i,
+        height: value
+      });
+    }
+  }
+
+  return rows;
+}
+
+function curveInitialFilter_(rows) {
+  const stat = stats_(
+    rows.map(r => r.height)
+  );
+
+  return rows.filter(
+    r => inside3_(r.height, stat)
+  );
+}
+
+function curveFitHeight_(rows, terms) {
+  checkSampleSize_(rows, terms);
+
+  const a = rows.map(
+    r => designRow_(r.n, terms)
+  );
+
+  const b = rows.map(
+    r => [r.height]
+  );
+
+  return qrLeastSquares_(a, b)
+    .map(r => r[0]);
+}
+
+/*
+ * Erste Ausgleichung nach 3-Sigma-Filter um den Mittelwert.
+ * Eine QR-Ausgleichung pro Aufruf.
+ */
+function curveFirstFit_(rows) {
+  const used =
+    curveInitialFilter_(rows);
+
+  const terms =
+    selectTerms_(used);
+
+  return {
+    terms: terms,
+    height: curveFitHeight_(used, terms)
+  };
+}
+
+/*
+ * Zweite Ausgleichung mit zusätzlichem 3-Sigma-Residuenfilter.
+ */
+function curveSecondFit_(rows, first) {
+  let used =
+    curveInitialFilter_(rows);
+
+  const errors = used.map(r =>
+    r.height -
+    evaluate_(
+      r.n,
+      first.terms,
+      first.height
+    )
+  );
+
+  const stat = stats_(errors);
+
+  used = used.filter(
+    (r, i) => inside3_(errors[i], stat)
+  );
+
+  const terms =
+    selectTerms_(used);
+
+  const height =
+    curveFitHeight_(used, terms);
+
+  const residuals = used.map(r =>
+    r.height -
+    evaluate_(r.n, terms, height)
+  );
+
+  const bounds =
+    transitBounds_(used);
+
+  return {
+    terms: terms,
+    height: height,
+    usedCount: used.length,
+    nMin: bounds.min,
+    nMax: bounds.max,
+    trainingHeightRMSE:
+      rmse_(residuals)
+  };
+}
+
+/*
+ * Je Stützstelle vier getrennte Triggeraufrufe:
+ *
+ * 1. Trainingsausgleichung, erster Durchgang.
+ * 2. Trainingsausgleichung, zweiter Durchgang + zeitlicher Test.
+ * 3. Gesamtausgleichung, erster Durchgang.
+ * 4. Gesamtausgleichung, zweiter Durchgang + Speicherung.
+ *
+ * Die Testdaten werden nicht anhand ihrer Vorhersageresiduen
+ * gefiltert.
+ *
+ * Der Test betrifft die Koeffizientenanpassung bei festem
+ * Ganglinienraster. Der Rasterursprung stammt aus der
+ * vorgeschalteten Intervallschätzung.
+ */
+function curveFitStep_(state, out) {
+  const rows =
+    curveReadPhase_(state, out);
+
+  const meta =
+    state.curve;
+
+  if (rows.length < 200) {
+    throw new Error(
+      'Zu wenige Gangliniendaten für k=' +
+      state.curveK
+    );
+  }
+
+  const cutoff =
+    meta.nFirst +
+    0.8 * (meta.nLast - meta.nFirst);
+
+  const train = rows.filter(
+    r => r.n <= cutoff
+  );
+
+  const test = rows.filter(
+    r => r.n > cutoff
+  );
+
+  switch (state.curveFitStage) {
+    case 'TRAIN_FIRST':
+      state.curveValidation = {
+        n: 0,
+        rmse: null,
+        bias: null,
+        terms: null
+      };
+
+      if (
+        train.length >= 200 &&
+        test.length >= 40
+      ) {
+        state.curvePreliminary =
+          curveFirstFit_(train);
+
+        state.curveFitStage =
+          'TRAIN_SECOND';
+
+      } else {
+        state.curveFitStage =
+          'FINAL_FIRST';
+      }
+
+      return;
+
+    case 'TRAIN_SECOND': {
+      const fit = curveSecondFit_(
+        train,
+        state.curvePreliminary
+      );
+
+      const errors = test.map(r =>
+        r.height -
+        evaluate_(
+          r.n,
+          fit.terms,
+          fit.height
+        )
+      );
+
+      state.curveValidation = {
         n: test.length,
-        rmse: errors.map(hhRMSE_),
-        bias: errors.map(e => hhStats_(e).mean),
+        rmse: rmse_(errors),
+        bias: stats_(errors).mean,
         terms: fit.terms.length
       };
 
-      // Erhalten lassen: bei Wiederholung nach Timeout wird
-      // TRAIN_SECOND mit demselben ersten Fit erneut ausführbar.
-      hhSaveWork_(ss, work);
-      s.fitPhase = 'FINAL_FIRST';
+      delete state.curvePreliminary;
+
+      state.curveFitStage =
+        'FINAL_FIRST';
+
       return;
     }
 
-    case 'FINAL_FIRST': {
-      const work = hhLoadWork_(ss, s, curve);
-      work.finalFirst = hhFirstFit_(rows);
-      hhSaveWork_(ss, work);
-      s.fitPhase = 'FINAL_SECOND';
+    case 'FINAL_FIRST':
+      state.curvePreliminary =
+        curveFirstFit_(rows);
+
+      state.curveFitStage =
+        'FINAL_SECOND';
+
       return;
-    }
 
     case 'FINAL_SECOND': {
-      const work = hhLoadWork_(ss, s, curve);
-      const fit = hhSecondFit_(rows, work.finalFirst);
+      const fit = curveSecondFit_(
+        rows,
+        state.curvePreliminary
+      );
 
-      if (curve) {
-        hhSaveCurveFit_(ss, s, rows, fit, work.validation);
-      } else {
-        hhSavePeakFit_(ss, s, rows, fit, work.validation);
-      }
+      const model = {
+        version: 2,
+        kind: 'HDDU_HYDROGRAPH',
+        k: state.curveK,
 
-      s.fitK++;
-      s.fitPhase = 'TRAIN_FIRST';
+        terms: fit.terms,
+        height: fit.height,
 
-      if (!curve && s.fitK > 4) {
-        s.stage = 'CURVE_INIT';
-      } else if (curve && s.fitK > s.curve.points) {
-        s.curve.complete = true;
-        s.curve.finishedUTC = new Date().toISOString();
-        hhWriteCurveMeta_(ss, s.curve);
-        s.stage = 'DONE';
+        nMin: fit.nMin,
+        nMax: fit.nMax,
 
-        hhWrite_(ss.getSheetByName('Info'), 24, [
-          ['Analyse fertig UTC', s.curve.finishedUTC],
-          ['Validierung', 'Diagnostik und Ganglinie_Diagnostik prüfen.'],
-          ['Testdefinition', 'Zeitlich spätere 20 %, ohne Residuen-Clipping.'],
-          ['Methodischer Hinweis',
-            '39-Glieder-Satz für HW/NW; Ganglinienerweiterung nach BSH 50/2013.'],
-          ['Einschränkung',
-            'Keine Vorhersage aktueller meteorologischer/hydrologischer Einflüsse.']
-        ]);
+        availableCount: rows.length,
+        usedCount: fit.usedCount,
+
+        trainingHeightRMSE:
+          fit.trainingHeightRMSE,
+
+        validation:
+          state.curveValidation
+      };
+
+      out.getSheetByName('Ganglinie_Modell')
+        .getRange(
+          state.curveK + 1,
+          1,
+          1,
+          2
+        )
+        .setValues([[
+          state.curveK,
+          JSON.stringify(model)
+        ]]);
+
+      const validation =
+        state.curveValidation;
+
+      out.getSheetByName('Ganglinie_Diagnostik')
+        .getRange(
+          state.curveK + 1,
+          1,
+          1,
+          10
+        )
+        .setValues([[
+          state.curveK,
+          rows.length,
+          fit.usedCount,
+          fit.terms.length,
+          fit.trainingHeightRMSE,
+          validation.n,
+
+          validation.rmse === null
+            ? ''
+            : validation.rmse,
+
+          validation.bias === null
+            ? ''
+            : validation.bias,
+
+          validation.terms === null
+            ? ''
+            : validation.terms,
+
+          rows.length /
+            (meta.nLast - meta.nFirst + 1)
+        ]]);
+
+      delete state.curvePreliminary;
+      delete state.curveValidation;
+
+      state.curveK++;
+      state.curveFitStage = 'TRAIN_FIRST';
+
+      if (
+        state.curveK > meta.points
+      ) {
+        state.curve.complete = true;
+
+        state.curve.finishedUTC =
+          iso_(Date.now());
+
+        writeCurveMeta_(
+          out,
+          state.curve
+        );
+
+        appendRows_(
+          out.getSheetByName('Info'),
+          [
+            [
+              'Gesamte Analyse fertig UTC',
+              iso_(Date.now())
+            ],
+            [
+              'Ganglinieninterpolation',
+              'Linear zwischen benachbarten synthetisierten ' +
+              'Stützstellen; auch über Mondtagsgrenzen hinweg.'
+            ],
+            [
+              'Prüfung',
+              'Ganglinie_Diagnostik: Datenbelegung, Gliederzahl, ' +
+              'zeitliche Testfehler und Bias prüfen.'
+            ],
+            [
+              'Gültigkeit',
+              'Astronomische Gezeitenvorausberechnung, ' +
+              'keine meteorologische Gesamtwasserstandsvorhersage.'
+            ],
+            [
+              'Methodischer Hinweis',
+              'Der 39-Glieder-Satz wurde im neueren Aufsatz ' +
+              'anhand von HW/NW geprüft. Die Ganglinienanwendung ' +
+              'kombiniert diesen Satz mit BSH 50/2013.'
+            ]
+          ]
+        );
+
+        state.stage = 'DONE';
       }
 
       return;
     }
 
     default:
-      throw new Error('Unbekannte Fit-Stufe.');
+      throw new Error(
+        'Unbekannter Ganglinien-Fit-Schritt: ' +
+        state.curveFitStage
+      );
   }
 }
 
-function hhCommonModel_(s, fit) {
+// ============================================================
+// Scheitelpunktvorhersage für einen UTC-Tag
+// ============================================================
+
+/**
+ * Liefert HW/NW für einen UTC-Kalendertag.
+ *
+ * Beispiel:
+ * vorhersageUTC('2026-11-03')
+ */
+function vorhersageUTC(datum, ergebnisDateiId) {
+  requireAstronomy_();
+
+  const start = parseUTCDate_(datum);
+  const end = start + DAY;
+
+  const id = ergebnisDateiId ||
+    PropertiesService.getScriptProperties()
+      .getProperty(HD.RESULT_KEY);
+
+  if (!id) {
+    throw new Error(
+      'Noch keine Ergebnisdatei vorhanden.'
+    );
+  }
+
+  const out =
+    SpreadsheetApp.openById(id);
+
+  const modelSheet =
+    out.getSheetByName('Modell');
+
+  if (!modelSheet) {
+    throw new Error(
+      'Die Ergebnisdatei enthält keine Scheitelpunktmodelle.'
+    );
+  }
+
+  const saved = modelSheet
+    .getRange(2, 2, 4, 1)
+    .getValues();
+
+  if (
+    saved.some(row => !row[0])
+  ) {
+    throw new Error(
+      'Scheitelpunktanalyse noch nicht vollständig.'
+    );
+  }
+
+  const models = saved.map(
+    row => JSON.parse(row[0])
+  );
+
+  for (let index = 0; index < models.length; index++) {
+    const model = models[index];
+
+    if (
+      model.k !== index + 1 ||
+      model.basis !== 'MEAN_UPPER_TRANSIT_2013' ||
+      model.t0 !== HD.T0 ||
+      model.syncMinutes !== HD.SYNC_MINUTES ||
+      model.moonDayHours !== HD.MOON_DAY_H
+    ) {
+      throw new Error(
+        'Modell oder Zeitbasis unpassend. Neu analysieren.'
+      );
+    }
+  }
+
+  const cache = {};
+  const events = [];
+  const warnings = [];
+
+  const moonDayMs =
+    HD.MOON_DAY_H * HOUR;
+
+  const nStart = Math.floor(
+    (start - meanUpper_(0)) / moonDayMs
+  ) - 4;
+
+  const nEnd = Math.ceil(
+    (end - meanUpper_(0)) / moonDayMs
+  ) + 2;
+
+  for (let n = nStart; n <= nEnd; n++) {
+    for (const model of models) {
+      const interval = evaluate_(
+        n,
+        model.terms,
+        model.time
+      );
+
+      if (
+        !Number.isFinite(interval) ||
+        Math.abs(interval) > 72
+      ) {
+        throw new Error(
+          'Unplausible extrapolierte Ereigniszeit.'
+        );
+      }
+
+      const time =
+        meanUpper_(n) + interval * HOUR;
+
+      if (
+        time < start ||
+        time >= end
+      ) {
+        continue;
+      }
+
+      const lower =
+        model.k >= 3;
+
+      const q =
+        2 * n + (lower ? 1 : 0);
+
+      events.push({
+        art:
+          model.k % 2 ? 'HW' : 'NW',
+
+        utc:
+          iso_(time),
+
+        wasserstand:
+          evaluate_(
+            n,
+            model.terms,
+            model.height
+          ),
+
+        transitnummer: n,
+        k: model.k,
+
+        zugeordneterTransit:
+          lower ? 'unterer' : 'oberer',
+
+        transitUTC:
+          iso_(trueTransit_(q, cache)),
+
+        verwendeteKonstituenten:
+          model.terms.length
+      });
+    }
+  }
+
+  events.sort(
+    (a, b) => a.utc.localeCompare(b.utc)
+  );
+
+  for (let i = 1; i < events.length; i++) {
+    if (
+      events[i].art === events[i - 1].art
+    ) {
+      warnings.push(
+        'Nicht alternierende HW/NW-Folge: ' +
+        'Modell und Zuordnung prüfen.'
+      );
+    }
+  }
+
+  const dailyTransits =
+    greenwichTransitsBetween_(
+      start,
+      end,
+      cache
+    );
+
+  const shortestYears = Math.min(
+    ...models.map(model =>
+      (model.nMax - model.nMin) *
+      HD.MOON_DAY_H /
+      (24 * 365.2425)
+    )
+  );
+
+  if (shortestYears < 9) {
+    warnings.push(
+      'Weniger als neun Jahre Analysedaten: wichtige nahe ' +
+      'Frequenzen sind nicht getrennt bestimmbar. ' +
+      'Eine Referenzpegelanalyse ist fachlich vorzuziehen.'
+    );
+
+  } else if (shortestYears < 18.6133) {
+    warnings.push(
+      'Weniger als eine vollständige Mondknotenperiode ' +
+      'in mindestens einer Ereignisreihe: eingeschränkte ' +
+      'Bestimmbarkeit langperiodischer Glieder.'
+    );
+  }
+
+  const minTerms = Math.min(
+    ...models.map(model => model.terms.length)
+  );
+
+  if (minTerms < 39) {
+    warnings.push(
+      'Nicht alle 39 Konstituenten konnten in jeder ' +
+      'Ereignisklasse verwendet werden.'
+    );
+  }
+
+  const latestObservation = Math.min(
+    ...models.map(model =>
+      Date.parse(model.inputEndUTC)
+    )
+  );
+
+  if (
+    start > latestObservation + 365.2425 * DAY
+  ) {
+    warnings.push(
+      'Vorhersagedatum liegt mehr als ein Jahr hinter ' +
+      'dem Ende mindestens einer analysierten Ereignisreihe.'
+    );
+  }
+
+  warnings.push(
+    'Wasserstände in der Originaleinheit der Spalte B; ' +
+    'keine automatische Umrechnung nach m oder auf ein Höhendatum.'
+  );
+
+  warnings.push(
+    'Astronomische Gezeitenvorausberechnung; ' +
+    'kein vorhergesagter Windstau und keine aktuelle Abflusskorrektur.'
+  );
+
   return {
-    version: HH.VERSION,
-    station: HH.EXPECTED_SITE,
-    siteCode: HH.EXPECTED_CODE,
-    unit: 'm',
-    datum: s.header.datum,
-    t0: HH.T0,
-    syncMinutes: HH.SYNC_MINUTES,
-    moonDayHours: HH.MOON_DAY_HOURS,
-    terms: fit.terms,
-    nMin: fit.nMin,
-    nMax: fit.nMax,
-    usedCount: fit.usedCount
+    datumUTC: datum,
+    ergebnisDateiId: id,
+    greenwichTransite: dailyTransits,
+    ereignisse: events,
+    hinweise: [...new Set(warnings)]
   };
 }
 
-function hhSavePeakFit_(ss, s, rows, fit, validation) {
-  const model = Object.assign(hhCommonModel_(s, fit), {
-    kind: 'HDDU_PEAK',
-    basis: 'MEAN_UPPER_TRANSIT_2013',
-    k: s.fitK,
-    time: fit.coefficients[0],
-    height: fit.coefficients[1],
-    inputStartUTC: hhIso_(rows[0].time),
-    inputEndUTC: hhIso_(rows[rows.length - 1].time),
-    availableCount: rows.length,
-    trainingTimeRMSEmin: fit.rmse[0] * 60,
-    trainingHeightRMSE: fit.rmse[1],
-    validation: {
-      n: validation.n,
-      timeRMSEmin: validation.n ? validation.rmse[0] * 60 : null,
-      heightRMSE: validation.n ? validation.rmse[1] : null,
-      timeBiasMin: validation.n ? validation.bias[0] * 60 : null,
-      heightBias: validation.n ? validation.bias[1] : null,
-      terms: validation.terms
+function greenwichTransitsBetween_(start, end, cache) {
+  const halfMs =
+    HD.MOON_DAY_H * HOUR / 2;
+
+  const firstQ = Math.floor(
+    (start - meanUpper_(0)) / halfMs
+  ) - 2;
+
+  const lastQ = Math.ceil(
+    (end - meanUpper_(0)) / halfMs
+  ) + 2;
+
+  const result = [];
+
+  for (let q = firstQ; q <= lastQ; q++) {
+    const time =
+      trueTransit_(q, cache);
+
+    if (
+      time < start ||
+      time >= end
+    ) {
+      continue;
     }
-  });
 
-  hhWrite_(ss.getSheetByName('Modell'), s.fitK + 1, [
-    [s.fitK, JSON.stringify(model)]
-  ]);
+    const n =
+      Math.floor(q / 2);
 
-  const v = model.validation;
+    result.push({
+      art:
+        q - 2 * n ? 'unterer' : 'oberer',
 
-  hhWrite_(ss.getSheetByName('Diagnostik'), s.fitK + 1, [[
-    s.fitK,
-    rows.length,
-    fit.usedCount,
-    fit.terms.length,
-    model.trainingTimeRMSEmin,
-    model.trainingHeightRMSE,
-    v.n,
-    v.timeRMSEmin === null ? '' : v.timeRMSEmin,
-    v.heightRMSE === null ? '' : v.heightRMSE,
-    v.timeBiasMin === null ? '' : v.timeBiasMin,
-    v.heightBias === null ? '' : v.heightBias,
-    v.terms === null ? '' : v.terms
-  ]]);
+      utc:
+        iso_(time),
+
+      transitnummer:
+        n
+    });
+  }
+
+  return result.sort(
+    (a, b) => a.utc.localeCompare(b.utc)
+  );
 }
 
-/* ============================================================
- * Ganglinienanalyse
- * ============================================================ */
+/**
+ * Nur Mondtransite, ohne Pegelanalyse.
+ */
+function greenwichMondtransiteUTC(datum) {
+  requireAstronomy_();
 
-function hhCurveInit_(ss, s) {
-  const points = HH.CURVE_POINTS;
-  const step = HH_PERIOD / points;
-  const origin = hhMeanUpper_(0) + s.hwLag * HH_HOUR + step / 2;
+  const start =
+    parseUTCDate_(datum);
 
-  const nFirst = Math.floor((s.start - origin) / HH_PERIOD);
-  const nLast = Math.floor((s.end - 1 - origin) / HH_PERIOD);
+  return greenwichTransitsBetween_(
+    start,
+    start + DAY,
+    {}
+  );
+}
 
-  if (!ss.getSheetByName('Ganglinie_Daten')) {
-    const headers = ['Transitnummer_n'];
-    for (let k = 1; k <= points; k++) headers.push('Wasserstand_m_k' + k);
-    hhNewSheet_(ss, 'Ganglinie_Daten', headers);
-  }
+function beispiel20261103() {
+  const result =
+    vorhersageUTC('2026-11-03');
 
-  hhResize_(
-    ss.getSheetByName('Ganglinie_Daten'),
-    nLast - nFirst + 2,
-    points + 1
+  console.log(
+    JSON.stringify(result, null, 2)
   );
 
-  if (!ss.getSheetByName('Ganglinie_Modell')) {
-    hhNewSheet_(ss, 'Ganglinie_Modell', ['k', 'JSON']);
+  writePrediction_(result);
+  return result;
+}
+
+function writePrediction_(result) {
+  const id = result.ergebnisDateiId ||
+    PropertiesService.getScriptProperties()
+      .getProperty(HD.RESULT_KEY);
+
+  if (!id) {
+    throw new Error('Keine Ergebnisdatei vorhanden.');
   }
-  if (!ss.getSheetByName('Ganglinie_Meta')) {
-    hhNewSheet_(ss, 'Ganglinie_Meta', ['Eigenschaft', 'JSON']);
+
+  const ss =
+    SpreadsheetApp.openById(id);
+
+  let sheet =
+    ss.getSheetByName('Vorhersage');
+
+  if (!sheet) {
+    sheet = createSheet_(
+      ss,
+      'Vorhersage',
+      [
+        'Art',
+        'Ereignis UTC',
+        'Wasserstand',
+        'Transitart',
+        'Transit UTC',
+        'Transitnummer'
+      ]
+    );
   }
-  if (!ss.getSheetByName('Ganglinie_Diagnostik')) {
-    hhNewSheet_(ss, 'Ganglinie_Diagnostik', [
-      'k', 'Vorhanden', 'Verwendet', 'Glieder',
-      'Fit_RMSE_m', 'Test_N', 'Test_RMSE_m', 'Test_Bias_m',
-      'Test_Glieder', 'Belegung'
+
+  sheet.clearContents();
+
+  const rows = [
+    [
+      'Datum UTC',
+      result.datumUTC,
+      '',
+      '',
+      '',
+      ''
+    ],
+    ['', '', '', '', '', ''],
+    [
+      'Art',
+      'Ereignis UTC',
+      'Wasserstand_Originaleinheit',
+      'Transitart',
+      'Transit UTC',
+      'Transitnummer'
+    ]
+  ];
+
+  result.ereignisse.forEach(event => {
+    rows.push([
+      event.art,
+      event.utc,
+      event.wasserstand,
+      event.zugeordneterTransit,
+      event.transitUTC,
+      event.transitnummer
+    ]);
+  });
+
+  rows.push(
+    ['', '', '', '', '', '']
+  );
+
+  rows.push([
+    'Greenwich-Transite des UTC-Tages',
+    '',
+    '',
+    '',
+    '',
+    ''
+  ]);
+
+  result.greenwichTransite.forEach(transit => {
+    rows.push([
+      transit.art,
+      transit.utc,
+      '',
+      '',
+      '',
+      transit.transitnummer
+    ]);
+  });
+
+  rows.push(
+    ['', '', '', '', '', '']
+  );
+
+  result.hinweise.forEach(text => {
+    rows.push([
+      'Hinweis',
+      text,
+      '',
+      '',
+      '',
+      ''
+    ]);
+  });
+
+  ensureSheetSize_(
+    sheet,
+    rows.length,
+    6
+  );
+
+  sheet.getRange(
+    1, 1, rows.length, 6
+  ).setValues(rows);
+
+  sheet.autoResizeColumns(1, 6);
+}
+
+// ============================================================
+// Ganglinienmodelle laden und Wasserstände synthetisieren
+// ============================================================
+
+function loadCurveModels_(ergebnisDateiId) {
+  const id = ergebnisDateiId ||
+    PropertiesService.getScriptProperties()
+      .getProperty(HD.RESULT_KEY);
+
+  if (!id) {
+    throw new Error(
+      'Keine Ergebnisdatei vorhanden.'
+    );
+  }
+
+  const out =
+    SpreadsheetApp.openById(id);
+
+  const metaSheet =
+    out.getSheetByName('Ganglinie_Meta');
+
+  const modelSheet =
+    out.getSheetByName('Ganglinie_Modell');
+
+  if (!metaSheet || !modelSheet) {
+    throw new Error(
+      'Diese Ergebnisdatei enthält noch keine Ganglinienanalyse.'
+    );
+  }
+
+  const metaText =
+    metaSheet.getRange(2, 2).getValue();
+
+  if (!metaText) {
+    throw new Error(
+      'Ganglinien-Metadaten fehlen.'
+    );
+  }
+
+  const meta =
+    JSON.parse(metaText);
+
+  if (
+    meta.version !== 2 ||
+    !meta.complete
+  ) {
+    throw new Error(
+      'Ganglinienanalyse noch nicht vollständig.'
+    );
+  }
+
+  if (
+    !Number.isInteger(meta.points) ||
+    meta.points < 1 ||
+    !Number.isFinite(meta.originMs) ||
+    !Number.isFinite(meta.stepMs) ||
+    meta.stepMs <= 0
+  ) {
+    throw new Error(
+      'Ungültige Ganglinien-Metadaten.'
+    );
+  }
+
+  const saved = modelSheet
+    .getRange(
+      2,
+      2,
+      meta.points,
+      1
+    )
+    .getValues();
+
+  const models = saved.map((row, index) => {
+    if (!row[0]) {
+      throw new Error(
+        'Ganglinienmodell fehlt: k=' +
+        (index + 1)
+      );
+    }
+
+    const model =
+      JSON.parse(row[0]);
+
+    if (
+      model.version !== 2 ||
+      model.kind !== 'HDDU_HYDROGRAPH' ||
+      model.k !== index + 1 ||
+      !Array.isArray(model.terms) ||
+      !Array.isArray(model.height) ||
+      model.height.length !==
+        1 + 2 * model.terms.length ||
+      !model.height.every(Number.isFinite)
+    ) {
+      throw new Error(
+        'Ungültiges Ganglinienmodell: k=' +
+        (index + 1)
+      );
+    }
+
+    for (const term of model.terms) {
+      if (
+        !Array.isArray(term) ||
+        !Number.isFinite(term[1])
+      ) {
+        throw new Error(
+          'Ungültige Frequenz im Ganglinienmodell.'
+        );
+      }
+    }
+
+    return model;
+  });
+
+  return {
+    id: id,
+    meta: meta,
+    models: models
+  };
+}
+
+/*
+ * Globaler Stützstellenindex:
+ *
+ * j = n * points + (k - 1)
+ *
+ * Nach der letzten Stützstelle eines Mondtags folgt
+ * die erste Stützstelle des nächsten Mondtags.
+ */
+function curveGridValue_(j, bundle, cache) {
+  if (cache.has(j)) {
+    return cache.get(j);
+  }
+
+  const points =
+    bundle.meta.points;
+
+  const n =
+    Math.floor(j / points);
+
+  const index =
+    j - n * points;
+
+  const model =
+    bundle.models[index];
+
+  const height = evaluate_(
+    n,
+    model.terms,
+    model.height
+  );
+
+  if (!Number.isFinite(height)) {
+    throw new Error(
+      'Nicht endlicher synthetisierter Wasserstand.'
+    );
+  }
+
+  cache.set(j, height);
+  return height;
+}
+
+function curveValueAt_(time, bundle, cache) {
+  const position =
+    (time - bundle.meta.originMs) /
+    bundle.meta.stepMs;
+
+  const left =
+    Math.floor(position);
+
+  const fraction =
+    position - left;
+
+  const a =
+    curveGridValue_(left, bundle, cache);
+
+  const b =
+    curveGridValue_(left + 1, bundle, cache);
+
+  return a + fraction * (b - a);
+}
+
+function curveWarnings_(bundle, start, end) {
+  const meta = bundle.meta;
+
+  const termCounts =
+    bundle.models.map(m => m.terms.length);
+
+  const minTerms =
+    Math.min(...termCounts);
+
+  const maxTerms =
+    Math.max(...termCounts);
+
+  const warnings = [
+    'Astronomische Gezeitenvorausberechnung; Windstau, Luftdruck ' +
+    'und aktuelle Abflussverhältnisse werden nicht vorhergesagt.',
+
+    'Wasserstand in der Originaleinheit und im Höhendatum der Quellen.',
+
+    'Minütliche Ausgabe durch lineare Interpolation eines ' +
+    (meta.stepMs / MINUTE).toFixed(4) +
+    '-Minuten-Stützstellenrasters; keine garantierte ' +
+    'Vorhersagegenauigkeit von einer Minute.'
+  ];
+
+  if (minTerms < 39) {
+    warnings.push(
+      'Nicht alle 39 Glieder waren in jeder Stützstellenreihe ' +
+      'auflösbar: verwendet werden ' +
+      minTerms + ' bis ' + maxTerms + ' Glieder.'
+    );
+  }
+
+  const analysisStart =
+    Date.parse(meta.analysisStartUTC);
+
+  const analysisEnd =
+    Date.parse(meta.analysisEndUTCExclusive);
+
+  if (
+    start < analysisStart ||
+    end >= analysisEnd
+  ) {
+    warnings.push(
+      'Abfrage enthält Zeiten außerhalb des Analysezeitraums: ' +
+      'zeitliche Extrapolation.'
+    );
+  }
+
+  if (
+    end > analysisEnd + 365.2425 * DAY
+  ) {
+    warnings.push(
+      'Abfrage reicht mehr als ein Jahr über das Analyseende hinaus. ' +
+      'Änderungen des Pegelregimes und des mittleren Wasserstands prüfen.'
+    );
+  }
+
+  const minimumCoverage = Math.min(
+    ...bundle.models.map(model =>
+      model.availableCount /
+      (meta.nLast - meta.nFirst + 1)
+    )
+  );
+
+  if (minimumCoverage < 0.6) {
+    warnings.push(
+      'Mindestens eine Stützstellenreihe ist zu weniger als ' +
+      '60 % mit gültigen Beobachtungen belegt.'
+    );
+  }
+
+  return warnings;
+}
+
+/**
+ * Wasserstand für eine einzelne UTC-Minute.
+ *
+ * Beispiel:
+ * wasserstandUTC('2026-10-14 0927Z')
+ *
+ * Optional:
+ * wasserstandUTC('2026-10-14 0927Z', 'ERGEBNISDATEI_ID')
+ *
+ * Keine Google-Sheets-Custom-Function:
+ * Aufruf aus dem Apps-Script-Editor über eine Beispielfunktion
+ * oder aus anderem autorisiertem Scriptcode.
+ */
+function wasserstandUTC(zeitUTC, ergebnisDateiId) {
+  const time =
+    parseMinuteUTC_(zeitUTC);
+
+  const bundle =
+    loadCurveModels_(ergebnisDateiId);
+
+  return {
+    utc:
+      isoMinute_(time),
+
+    wasserstand:
+      curveValueAt_(time, bundle, new Map()),
+
+    einheit:
+      bundle.meta.unit,
+
+    methode:
+      'HDdU-Ganglinie mit linearer Stützstelleninterpolation',
+
+    stuetzstellenJeMondtag:
+      bundle.meta.points,
+
+    stuetzstellenAbstandMinuten:
+      bundle.meta.stepMs / MINUTE,
+
+    ergebnisDateiId:
+      bundle.id,
+
+    hinweise:
+      curveWarnings_(bundle, time, time)
+  };
+}
+
+/**
+ * Wasserstände für einen Zeitraum.
+ *
+ * Ende inklusive, sofern es auf dem Ausgaberaster liegt.
+ *
+ * Beispiel:
+ * wasserstandZeitraumUTC(
+ *   '2026-10-14 0000Z',
+ *   '2026-10-14 2359Z',
+ *   1
+ * )
+ *
+ * schrittMinuten:
+ * positive ganze Zahl, Standard 1.
+ */
+function wasserstandZeitraumUTC(
+  vonUTC,
+  bisUTC,
+  schrittMinuten,
+  ergebnisDateiId
+) {
+  const start =
+    parseMinuteUTC_(vonUTC);
+
+  const end =
+    parseMinuteUTC_(bisUTC);
+
+  const step =
+    schrittMinuten === undefined
+      ? 1
+      : schrittMinuten;
+
+  if (
+    !Number.isInteger(step) ||
+    step < 1
+  ) {
+    throw new Error(
+      'Schrittweite muss eine positive ganze Minutenzahl sein.'
+    );
+  }
+
+  if (end < start) {
+    throw new Error(
+      'Endzeit liegt vor der Anfangszeit.'
+    );
+  }
+
+  const count =
+    Math.floor(
+      (end - start) / (step * MINUTE)
+    ) + 1;
+
+  if (
+    count > HD_CURVE.MAX_OUTPUT_ROWS
+  ) {
+    throw new Error(
+      'Zu viele Ausgabewerte. Zeitraum aufteilen ' +
+      'oder Schrittweite erhöhen.'
+    );
+  }
+
+  const bundle =
+    loadCurveModels_(ergebnisDateiId);
+
+  const cache =
+    new Map();
+
+  const values = [];
+
+  for (let i = 0; i < count; i++) {
+    const time =
+      start + i * step * MINUTE;
+
+    values.push({
+      utc:
+        isoMinute_(time),
+
+      wasserstand:
+        curveValueAt_(time, bundle, cache)
+    });
+  }
+
+  return {
+    vonUTC:
+      isoMinute_(start),
+
+    bisUTC:
+      isoMinute_(end),
+
+    schrittMinuten:
+      step,
+
+    einheit:
+      bundle.meta.unit,
+
+    methode:
+      'HDdU-Ganglinie mit linearer Stützstelleninterpolation',
+
+    stuetzstellenJeMondtag:
+      bundle.meta.points,
+
+    ergebnisDateiId:
+      bundle.id,
+
+    werte:
+      values,
+
+    hinweise:
+      curveWarnings_(bundle, start, end)
+  };
+}
+
+/**
+ * Schreibt einen Einzelwert oder eine Zeitreihe
+ * in Wasserstand_Vorhersage.
+ *
+ * Das bisherige Blatt wird inhaltlich ersetzt.
+ */
+function schreibeWasserstand_(result) {
+  const out = SpreadsheetApp.openById(
+    result.ergebnisDateiId
+  );
+
+  let sheet =
+    out.getSheetByName('Wasserstand_Vorhersage');
+
+  if (!sheet) {
+    sheet = createSheet_(
+      out,
+      'Wasserstand_Vorhersage',
+      [
+        'UTC',
+        'Wasserstand_Originaleinheit'
+      ]
+    );
+  }
+
+  sheet.clearContents();
+
+  const values = result.werte || [{
+    utc: result.utc,
+    wasserstand: result.wasserstand
+  }];
+
+  const rows = [
+    [
+      'UTC',
+      'Wasserstand_Originaleinheit'
+    ]
+  ];
+
+  for (const value of values) {
+    rows.push([
+      value.utc,
+      value.wasserstand
     ]);
   }
 
-  s.curve = {
-    version: HH.VERSION,
-    complete: false,
-    station: HH.EXPECTED_SITE,
-    siteCode: HH.EXPECTED_CODE,
-    unit: 'm',
-    datum: s.header.datum,
-    points: points,
-    moonDayMs: HH_PERIOD,
-    stepMs: step,
-    originMs: origin,
-    hwLagHours: s.hwLag,
-    t0: HH.T0,
-    syncMinutes: HH.SYNC_MINUTES,
-    moonDayHours: HH.MOON_DAY_HOURS,
-    nFirst: nFirst,
-    nLast: nLast,
-    analysisStartUTC: hhIso_(s.start),
-    analysisEndUTCExclusive: hhIso_(s.end),
-    interpolation: 'linear',
-    sourceStepMinutes: HH.STEP_MINUTES,
-    sourceInterpolation:
-      'linear only between adjacent valid 10-minute observations',
-    sourceQC: HH.ACCEPT_QC,
-    sourceUseFlag: 1,
-    sourceTimeHandling: 'UTC',
-    methodNote:
-      'BSH 50/2013 hydrograph grid with the 39-constituent HW/NW set'
-  };
+  rows.push(['', '']);
 
-  hhWriteCurveMeta_(ss, s.curve);
-  s.curveNextN = nFirst;
-  s.stage = 'CURVE_SAMPLE';
-}
-
-function hhWriteCurveMeta_(ss, meta) {
-  hhWrite_(ss.getSheetByName('Ganglinie_Meta'), 2, [
-    ['Metadaten', JSON.stringify(meta)]
-  ]);
-}
-
-function hhCurveTime_(meta, n, k) {
-  return meta.originMs + n * meta.moonDayMs + (k - 1) * meta.stepMs;
-}
-
-function hhCurveSample_(ss, s) {
-  const m = s.curve;
-  const firstN = s.curveNextN;
-  const lastN = Math.min(m.nLast, firstN + HH.SAMPLE_MOON_DAYS - 1);
-
-  const firstTime = hhCurveTime_(m, firstN, 1);
-  const lastTime = hhCurveTime_(m, lastN, m.points);
-
-  const from = Math.max(
-    s.start,
-    s.start + Math.floor((firstTime - s.start) / HH_STEP) * HH_STEP
-  );
-
-  const to = Math.min(
-    s.end,
-    s.start + (Math.ceil((lastTime - s.start) / HH_STEP) + 1) * HH_STEP
-  );
-
-  const values = hhReadGrid_(ss, s, from, to);
-  const rows = [];
-
-  for (let n = firstN; n <= lastN; n++) {
-    const row = [n];
-
-    for (let k = 1; k <= m.points; k++) {
-      const time = hhCurveTime_(m, n, k);
-
-      let height = NaN;
-      if (time >= s.start && time < s.end) {
-        height = hhInterpolateGrid_(values, from, time);
-      }
-
-      row.push(Number.isFinite(height) ? height : '');
-    }
-
-    rows.push(row);
+  for (const warning of result.hinweise) {
+    rows.push([
+      'Hinweis',
+      warning
+    ]);
   }
 
-  hhWrite_(
-    ss.getSheetByName('Ganglinie_Daten'),
-    2 + firstN - m.nFirst,
-    rows
-  );
-
-  s.curveNextN = lastN + 1;
-
-  if (s.curveNextN > m.nLast) {
-    s.fitK = 1;
-    s.fitPhase = 'TRAIN_FIRST';
-    s.stage = 'CURVE_FIT';
-  }
-}
-
-function hhCurveRows_(ss, s) {
-  const count = s.curve.nLast - s.curve.nFirst + 1;
-
-  const values = ss.getSheetByName('Ganglinie_Daten')
-    .getRange(2, s.fitK + 1, count, 1).getValues();
-
-  const rows = [];
-
-  values.forEach((r, i) => {
-    if (typeof r[0] === 'number' && Number.isFinite(r[0])) {
-      rows.push({
-        n: s.curve.nFirst + i,
-        y: [r[0]]
-      });
-    }
-  });
-
-  return rows;
-}
-
-function hhSaveCurveFit_(ss, s, rows, fit, validation) {
-  const model = Object.assign(hhCommonModel_(s, fit), {
-    kind: 'HDDU_HYDROGRAPH',
-    k: s.fitK,
-    height: fit.coefficients[0],
-    availableCount: rows.length,
-    trainingHeightRMSE: fit.rmse[0],
-    validation: {
-      n: validation.n,
-      rmse: validation.n ? validation.rmse[0] : null,
-      bias: validation.n ? validation.bias[0] : null,
-      terms: validation.terms
-    }
-  });
-
-  hhWrite_(ss.getSheetByName('Ganglinie_Modell'), s.fitK + 1, [
-    [s.fitK, JSON.stringify(model)]
-  ]);
-
-  const v = model.validation;
-
-  hhWrite_(ss.getSheetByName('Ganglinie_Diagnostik'), s.fitK + 1, [[
-    s.fitK,
+  ensureSheetSize_(
+    sheet,
     rows.length,
-    fit.usedCount,
-    fit.terms.length,
-    fit.rmse[0],
-    v.n,
-    v.rmse === null ? '' : v.rmse,
-    v.bias === null ? '' : v.bias,
-    v.terms === null ? '' : v.terms,
-    rows.length / (s.curve.nLast - s.curve.nFirst + 1)
-  ]]);
+    2
+  );
+
+  const blockSize = 10000;
+
+  for (
+    let i = 0;
+    i < rows.length;
+    i += blockSize
+  ) {
+    const block =
+      rows.slice(i, i + blockSize);
+
+    sheet.getRange(
+      i + 1,
+      1,
+      block.length,
+      2
+    ).setValues(block);
+  }
+
+  sheet.setFrozenRows(1);
 }
 
-/* ============================================================
- * UTC
- * ============================================================ */
+/**
+ * Einzelwertbeispiel, direkt im Editor ausführbar.
+ */
+function beispielWasserstand20261014() {
+  const result = wasserstandUTC(
+    '2026-10-14 0927Z'
+  );
 
-function hhParseUTC_(text) {
+  console.log(
+    JSON.stringify(result, null, 2)
+  );
+
+  schreibeWasserstand_(result);
+  return result;
+}
+
+/**
+ * Tagesganglinie mit 1.440 Minutenwerten.
+ */
+function beispielGanglinie20261014() {
+  const result = wasserstandZeitraumUTC(
+    '2026-10-14 0000Z',
+    '2026-10-14 2359Z',
+    1
+  );
+
+  schreibeWasserstand_(result);
+
+  console.log(
+    result.werte.length +
+    ' Wasserstände nach Wasserstand_Vorhersage geschrieben.'
+  );
+
+  return result;
+}
+
+// ============================================================
+// Datumsfunktionen und astronomischer Kontrolltest
+// ============================================================
+
+function parseUTCDate_(text) {
   if (
     typeof text !== 'string' ||
-    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(text)
+    !/^\d{4}-\d{2}-\d{2}$/.test(text)
   ) {
-    throw new Error('UTC-Format erforderlich: YYYY-MM-DDTHH:mm:ssZ');
+    throw new Error(
+      'Datum als Zeichenfolge YYYY-MM-DD angeben.'
+    );
   }
 
-  const time = Date.parse(text);
+  const time =
+    Date.parse(text + 'T00:00:00Z');
 
   if (
     !Number.isFinite(time) ||
-    new Date(time).toISOString() !== text.replace('Z', '.000Z')
+    new Date(time).toISOString().slice(0, 10) !== text
   ) {
-    throw new Error('Ungültige UTC-Zeit: ' + text);
+    throw new Error(
+      'Ungültiges Datum: ' + text
+    );
   }
 
   return time;
 }
 
-function hhIso_(ms) {
-  return new Date(Math.round(ms)).toISOString();
-}
-
-/* ============================================================
- * Tests
- * ============================================================ */
-
-function hdduTests() {
-  function assert(condition, message) {
-    if (!condition) throw new Error('Test fehlgeschlagen: ' + message);
+/**
+ * Zulässige Eingaben:
+ *
+ * 2026-10-14 0927Z
+ * 2026-10-14 09:27Z
+ * 2026-10-14T09:27Z
+ * 2026-10-14T09:27:00Z
+ *
+ * Sekunden ungleich null werden nicht akzeptiert.
+ */
+function parseMinuteUTC_(text) {
+  if (typeof text !== 'string') {
+    throw new Error(
+      'UTC-Zeit bitte als Zeichenfolge angeben.'
+    );
   }
 
-  const header = { nullValue: '-99.9999' };
-
-  const a = hhParseGeslaRow_(
-    '1999/11/01 00:00:00   0.5260 1 1', header, 'Test'
+  const match = text.trim().match(
+    /^(\d{4}-\d{2}-\d{2})[T ](\d{2}):?(\d{2})(?::00)?Z$/
   );
 
-  assert(
-    a.time === Date.parse('1999-11-01T00:00:00Z'),
-    'UTC ohne MEZ/MESZ-Verschiebung'
-  );
-  assert(a.valid && a.level === 0.526, 'Meter unverändert');
+  if (!match) {
+    throw new Error(
+      'UTC-Format: YYYY-MM-DD HHMMZ ' +
+      'oder YYYY-MM-DDTHH:MMZ.'
+    );
+  }
 
-  const missing = hhParseGeslaRow_(
-    '1999/11/01 00:10:00 -99.9999 5 0', header, 'Test'
-  );
-  assert(!missing.valid && missing.isNull, 'NULL-Wert');
+  const canonical =
+    match[1] +
+    'T' +
+    match[2] +
+    ':' +
+    match[3] +
+    ':00Z';
 
-  const rejectedUse = hhParseGeslaRow_(
-    '1999/11/01 00:10:00 1.0 1 0', header, 'Test'
-  );
-  assert(!rejectedUse.valid, 'Use=0');
+  const time =
+    Date.parse(canonical);
 
-  const doubtful = hhParseGeslaRow_(
-    '1999/11/01 00:10:00 1.0 3 1', header, 'Test'
-  );
-  assert(!doubtful.valid, 'QC=3');
+  if (
+    !Number.isFinite(time) ||
+    new Date(time).toISOString() !==
+      canonical.replace('Z', '.000Z')
+  ) {
+    throw new Error(
+      'Ungültige UTC-Zeit: ' + text
+    );
+  }
 
-  const sourceInterpolated = hhParseGeslaRow_(
-    '1999/11/01 00:10:00 1.0 2 1', header, 'Test'
-  );
-  assert(
-    sourceInterpolated.valid === HH.ACCEPT_QC.includes(2),
-    'QC=2 gemäß Konfiguration'
-  );
+  return time;
+}
 
-  const grid = Float64Array.from([0, 2, NaN, 6]);
-  assert(
-    hhInterpolateGrid_(grid, 0, HH_STEP / 2) === 1,
-    'Interpolation innerhalb gültiger 10 Minuten'
-  );
-  assert(
-    Number.isNaN(hhInterpolateGrid_(grid, 0, 1.5 * HH_STEP)),
-    'Keine Interpolation über ungültigen Wert'
-  );
-  assert(
-    hhInterpolateGrid_(grid, 0, 3 * HH_STEP) === 6,
-    'Exakter gültiger Rasterwert'
-  );
+function iso_(ms) {
+  return new Date(Math.round(ms))
+    .toISOString()
+    .replace(/\.\d{3}Z$/, 'Z');
+}
 
-  const solution = hhQR_(
-    [[1, 0], [1, 1], [1, 2], [1, 3]],
-    [[2], [5], [8], [11]]
-  );
-  assert(Math.abs(solution[0][0] - 2) < 1e-10, 'QR-Konstante');
-  assert(Math.abs(solution[1][0] - 3) < 1e-10, 'QR-Steigung');
+function isoMinute_(ms) {
+  return new Date(ms)
+    .toISOString()
+    .slice(0, 16) + 'Z';
+}
 
-  assert(HH_TERMS.length === 39, '39 Glieder');
-  assert(new Set(HH_TERMS.map(t => t[0])).size === 39, 'Eindeutige Glieder');
+/**
+ * Vergleich mit Transitangaben aus Tabelle 6 des BSH-Berichts.
+ *
+ * Gibt Abweichungen aus; verändert keine Daten.
+ */
+function testAstronomie() {
+  requireAstronomy_();
 
-  hhRequireAstronomy_();
-  const cache = new Map();
-
-  const references = [
-    [2 * 14468, '1991-01-01T00:18:00Z'],
-    [2 * 14468 + 1, '1991-01-01T12:50:00Z'],
-    [2 * 21172, '2009-12-30T23:12:00Z']
+  const examples = [
+    [
+      2 * 14468,
+      '1991-01-01T00:18:00Z'
+    ],
+    [
+      2 * 14468 + 1,
+      '1991-01-01T12:50:00Z'
+    ],
+    [
+      2 * 21172,
+      '2009-12-30T23:12:00Z'
+    ]
   ];
 
-  const astronomy = references.map(([q, reference]) => {
-    const time = hhTrueTransit_(q, cache);
-    const difference = (time - Date.parse(reference)) / HH_MINUTE;
+  const cache = {};
 
-    assert(Math.abs(difference) < 2, 'Transitvergleich q=' + q);
+  const result = examples.map(([q, reference]) => {
+    const calculated =
+      trueTransit_(q, cache);
 
     return {
       q: q,
-      berechnet: hhIso_(time),
-      referenz: reference,
-      differenzMinuten: difference
+
+      berechnet:
+        iso_(calculated),
+
+      tabellenwert:
+        reference,
+
+      differenzMinuten:
+        (
+          calculated -
+          Date.parse(reference)
+        ) / MINUTE
     };
   });
 
-  console.log(JSON.stringify(astronomy, null, 2));
   console.log(
-    'Parser-, Einheiten-, QC-, Interpolations-, QR- und Astronomietests bestanden.'
+    JSON.stringify(result, null, 2)
   );
 
-  return true;
+  return result;
 }
+
+/*
+**Hinweise zum Betrieb:**
+
+- Vor dem Ersetzen der alten Datei einen laufenden alten Analyseauftrag mit `hdduStop()` beenden.
+- Die vollständige Analyse kann mehrere Stunden dauern und Apps-Script-Tagesquoten erreichen. Nach einem Quotenreset mit `hdduFortsetzen()` weiterarbeiten.
+- Vor Verwendung der Vorhersagen insbesondere `Quellen`, `Diagnostik` und `Ganglinie_Diagnostik` prüfen. Ein dichteres Ganglinienraster ist über `HD_CURVE.POINTS: 288` möglich, erfordert aber eine neue vollständige Analyse.
+*/
