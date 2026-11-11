@@ -3,13 +3,14 @@
 <head>
   <base target="_top">
   <meta charset="UTF-8">
+
   <title>Hamburgo ‒ St. Pauli: akvoniveloj</title>
 
   <style>
     :root {
       color-scheme: light;
       --blue: #075985;
-      --dark: #0c4a6e;
+      --blue-dark: #0c4a6e;
       --pale: #e0f2fe;
       --border: #cbd5e1;
       --text: #172b3a;
@@ -23,40 +24,45 @@
 
     body {
       margin: 0;
-      color: var(--text);
       background: var(--background);
+      color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont,
                    "Segoe UI", sans-serif;
       line-height: 1.5;
     }
 
     main {
-      width: min(100% - 28px, 850px);
+      width: min(100% - 28px, 820px);
       margin: 28px auto;
     }
 
     h1 {
-      margin: 0 0 12px;
-      color: var(--dark);
-      font-size: clamp(1.55rem, 4vw, 2.1rem);
+      margin: 0 0 10px;
+      color: var(--blue-dark);
+      font-size: clamp(1.6rem, 4vw, 2.15rem);
     }
 
     h2 {
-      margin: 0 0 15px;
-      font-size: 1.3rem;
+      margin: 0 0 14px;
+      font-size: 1.25rem;
     }
 
     h3 {
       margin: 22px 0 10px;
-      font-size: 1.08rem;
+      font-size: 1.05rem;
     }
 
     p {
       margin: 0 0 14px;
     }
 
-    a {
-      color: var(--blue);
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 18px;
+      box-shadow: 0 4px 18px rgb(15 23 42 / 4%);
     }
 
     .muted {
@@ -67,46 +73,37 @@
       font-size: .9rem;
     }
 
-    .card {
-      margin-top: 18px;
-      padding: 22px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: white;
-      box-shadow: 0 4px 18px rgb(15 23 42 / 4%);
-    }
-
     fieldset {
       min-width: 0;
-      margin: 0;
       padding: 0;
+      margin: 0;
       border: 0;
     }
 
-    label,
-    .label {
+    label {
       display: block;
-      margin-bottom: 6px;
       font-weight: 650;
+      margin-bottom: 6px;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
     }
 
     button,
     select {
       min-height: 42px;
-      border: 1px solid var(--border);
       border-radius: 8px;
-      background: white;
-      color: var(--text);
-      font: inherit;
+      border: 1px solid var(--border);
     }
 
     button {
-      padding: 8px 13px;
       cursor: pointer;
-    }
-
-    select {
-      padding: 7px 10px;
+      padding: 8px 13px;
+      background: white;
+      color: var(--text);
     }
 
     button:hover:not(:disabled) {
@@ -114,26 +111,35 @@
     }
 
     button:focus-visible,
-    select:focus-visible {
+    select:focus-visible,
+    input:focus-visible {
       outline: 3px solid #38bdf8;
       outline-offset: 3px;
     }
 
     button:disabled,
     select:disabled {
+      cursor: wait;
       opacity: .6;
+    }
+
+    select {
+      padding: 7px 10px;
+      background: white;
+      color: var(--text);
     }
 
     .form-grid {
       display: grid;
       grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
       gap: 28px;
+      align-items: start;
     }
 
     .calendar {
-      padding: 12px;
       border: 1px solid var(--border);
       border-radius: 10px;
+      padding: 12px;
     }
 
     .calendar-nav {
@@ -147,16 +153,16 @@
       min-width: 0;
     }
 
-    .calendar-nav button {
-      padding: 6px 10px;
-    }
-
     #month {
       flex: 1;
     }
 
     #year {
-      width: 94px;
+      width: 91px;
+    }
+
+    .calendar-nav button {
+      padding: 6px 11px;
     }
 
     .weekdays,
@@ -196,47 +202,49 @@
     }
 
     .day.selected:hover:not(:disabled) {
-      background: var(--dark);
+      background: var(--blue-dark);
     }
 
     #selectedDate {
       margin-top: 12px;
       font-weight: 650;
+      font-variant-numeric: tabular-nums;
     }
 
     .time-row {
       display: flex;
-      gap: 10px;
       align-items: end;
+      gap: 10px;
       margin-bottom: 18px;
     }
 
     .time-row select {
-      min-width: 76px;
+      min-width: 78px;
     }
 
-    .separator {
+    .time-separator {
       padding-bottom: 9px;
       font-weight: 700;
     }
 
     #send {
+      display: block;
       width: 100%;
-      margin-top: 20px;
+      margin-top: 18px;
       padding: 11px 18px;
-      color: white;
       background: var(--blue);
       border-color: var(--blue);
+      color: white;
       font-weight: 700;
     }
 
     #send:hover:not(:disabled) {
-      background: var(--dark);
+      background: var(--blue-dark);
     }
 
     #status {
-      min-height: 1.5em;
       margin: 16px 0 0;
+      min-height: 1.5em;
     }
 
     #status.error {
@@ -244,25 +252,22 @@
     }
 
     .level {
-      padding: 16px;
       border-left: 5px solid var(--blue);
-      border-radius: 6px;
       background: #f0f9ff;
-    }
-
-    .level h3 {
-      margin-top: 0;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 22px;
     }
 
     #levelValue {
-      margin-bottom: 8px;
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       font-weight: 750;
-      font-variant-numeric: tabular-nums;
+      margin: 8px 0 0;
     }
 
     #levelMessage {
       margin-top: 10px;
+      margin-bottom: 0;
     }
 
     .table-wrap {
@@ -277,19 +282,19 @@
     th,
     td {
       padding: 11px 9px;
-      border-bottom: 1px solid #e2e8f0;
       text-align: left;
+      border-bottom: 1px solid #e2e8f0;
     }
 
     th {
-      color: var(--dark);
+      color: var(--blue-dark);
       background: #f8fafc;
     }
 
     td:nth-child(2),
     td:last-child {
-      white-space: nowrap;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
 
     #warnings {
@@ -336,19 +341,11 @@
     <p class="muted small">
       Chiuj horoj estas en UTK.
     </p>
-
     <p class="small">
       <a href="https://github.com/AndreasKueck/akvo" target="_blank">GitHub-deponejo</a>
     </p>
     <p class="small">
-      La prognozmetodo uzata chi tie estas la harmona prezento de neegalajhoj (germane: &quot;harmonische Darstellung der Ungleichheiten&quot;). Por aliaj lokoj oni povas uzi ret-apon &quot;<a href="https://script.google.com/a/~/macros/s/AKfycbzgeChQUzIlVM5wmtsrmwZkNNJUZgFLLPvtYkNztVaFhHHq2xp3NqImx2uolmQw_qBG4g/exec" target="_blank">Prognozo de akvoniveloj per TICON-4-datumoj</a>&quot;; ties bazo estas la harmona metodo.
-    </p>
-    <p class="small">
-      <b>Tiu chi ret-apo estu uzata nur por sciencaj kaj privataj esplorceloj,</b> kiel ekzemple por la komparo de diversaj prognozmetodoj.<br>
-      <b>Komerca uzo estas malpermesata.</b><br>La bazaj datumoj estas provizitaj &quot;tiaj, kiaj ili estas&quot; sen ia ajn garantio. La prognozoj ne taugas por navigacio au sekurec-kritikaj decidoj.
-    </p>
-    <p class="small">
-      Estis analizitaj por la evoluigo de tiu chi ret-apo akvonivelaj datumoj havigitaj pere de<br>&quot;<a href="https://gesla787883612.wordpress.com/downloads/" target="_blank">GESLA / Download – Version 4.1 (July 2026)</a>&quot; &gt; &quot;GESLA-4.1 CSV META_DATA FILE&quot; &gt; GESLA-dosiero pri &quot;stpaulitg-stp-deu-cmems&quot;;<br>datumprovizinto: Copernicus Marine Environment Monitoring Service (CMEMS). La ret-apo do estis kreita per helpo de datumoj disponigitaj de la Europ-Unia mar-serva informo Copernicus (&quot;Generated using E.U. Copernicus Marine Service Information&quot;).
+      La metodo uzata chi tie estas la harmona prezento de neegalajhoj (germane: &quot;harmonische Darstellung der Ungleichheiten&quot;). Por aliaj lokoj oni povas uzi ret-apon &quot;<a href="https://script.google.com/a/~/macros/s/AKfycbzgeChQUzIlVM5wmtsrmwZkNNJUZgFLLPvtYkNztVaFhHHq2xp3NqImx2uolmQw_qBG4g/exec" target="_blank">Prognozo de akvoniveloj per TICON-4-datumoj</a>&quot;; ties bazo estas la harmona metodo.
     </p>
     <p class="small">
       <a href="https://jhau.de/privateco.html" target="_blank">Privateco</a>
@@ -359,8 +356,9 @@
     <form id="form" novalidate>
       <fieldset id="controls">
         <div class="form-grid">
+
           <div>
-            <span id="calendarLabel" class="label">Dato en UTK</span>
+            <label id="calendarLabel">Dato en UTK</label>
 
             <div class="calendar"
                  role="group"
@@ -370,7 +368,9 @@
                 <button type="button"
                         id="previous"
                         title="Antaua monato"
-                        aria-label="Antaua monato">‹</button>
+                        aria-label="Antaua monato">
+                  ‹
+                </button>
 
                 <select id="month" aria-label="Monato"></select>
                 <select id="year" aria-label="Jaro"></select>
@@ -378,7 +378,9 @@
                 <button type="button"
                         id="next"
                         title="Sekva monato"
-                        aria-label="Sekva monato">›</button>
+                        aria-label="Sekva monato">
+                  ›
+                </button>
               </div>
 
               <div class="weekdays">
@@ -412,21 +414,23 @@
                 <select id="hour"></select>
               </div>
 
-              <span class="separator" aria-hidden="true">:</span>
+              <span class="time-separator" aria-hidden="true">:</span>
 
               <div>
                 <label for="minute">Minuto</label>
                 <select id="minute"></select>
               </div>
 
-              <span class="separator">UTK</span>
+              <span class="time-separator">UTK</span>
             </div>
 
-            <button type="button" id="now">Nuna dato kaj horo</button>
+            <button type="button" id="now">
+              Nuna dato kaj horo
+            </button>
 
             <p class="small muted" style="margin-top:12px">
-              La komencaj valoroj devenas de la horlogho de via aparato
-              kaj estas montrataj en UTK.
+              La komencaj valoroj devenas de la horlogho de via aparato.
+              Ili estas montrataj en UTK.
             </p>
 
             <button type="submit" id="send">Sendi</button>
@@ -450,11 +454,10 @@
     <h2 id="resultTitle">Rezultoj</h2>
 
     <div class="level">
-      <h3>Akvonivelo je la elektita horo</h3>
+      <h3 style="margin-top:0">Akvonivelo je la elektita horo</h3>
       <p id="levelTime"></p>
       <p id="levelValue"></p>
-      <p id="levelMessage" hidden></p>
-      <p id="levelDatum" class="small muted"></p>
+      <p id="levelMessage"></p>
     </div>
 
     <h3>Maksimumaj kaj minimumaj akvoniveloj de la elektita tago</h3>
@@ -463,7 +466,7 @@
       <table>
         <thead>
           <tr>
-            <th scope="col">Tipo</th>
+            <th scope="col">Akvoniveloj</th>
             <th scope="col">Dato kaj horo en UTK</th>
             <th scope="col">Akvonivelo (m)</th>
           </tr>
@@ -473,21 +476,19 @@
     </div>
 
     <p id="noEvents" hidden>
-      La modelo ne liveris maksimumajn au minimumajn akvonivelojn
-      por tiu tago.
+      La modelo ne liveris okazajhojn de maksimumaj au minimumaj akvoniveloj por tiu tago.
     </p>
 
     <p class="small muted" style="margin-top:12px">
       La tago ampleksas la tempon de 00:00 ghis, sed ne inkluzive,
-      00:00 de la sekva tago. La taga elekto okazas antau rondigo.
-      Evento tre proksima al noktomezo povas esti montrata kun
-      la dato de la sekva tago.
+      00:00 de la sekva tago. La taga elekto okazas antau rondigo;
+      evento tre proksima al noktomezo povas esti montrata kun la
+      dato de la sekva tago.
     </p>
 
     <h3>Gravaj rimarkoj</h3>
     <ul id="warnings"></ul>
 
-    <p id="analysisPeriod" class="small muted"></p>
     <p id="modelDate" class="small muted"></p>
   </section>
 </main>
@@ -528,8 +529,8 @@
   }
 
   function setupOptions() {
-    MONTHS.forEach((name, index) => {
-      addOption(el('month'), index, name);
+    MONTHS.forEach((month, index) => {
+      addOption(el('month'), index, month);
     });
 
     for (let year = MIN_YEAR; year <= MAX_YEAR; year++) {
@@ -598,7 +599,7 @@
     const firstDay = new Date(Date.UTC(viewYear, viewMonth, 1));
     const offset = (firstDay.getUTCDay() + 6) % 7;
 
-    const count = new Date(
+    const dayCount = new Date(
       Date.UTC(viewYear, viewMonth + 1, 0)
     ).getUTCDate();
 
@@ -610,19 +611,17 @@
       container.appendChild(spacer);
     }
 
-    for (let day = 1; day <= count; day++) {
+    for (let day = 1; day <= dayCount; day++) {
       const date = dateText(viewYear, viewMonth, day);
       const button = document.createElement('button');
 
       button.type = 'button';
       button.className = 'day';
       button.textContent = String(day);
-
       button.setAttribute(
         'aria-label',
         day + ' ' + MONTHS[viewMonth] + ' ' + viewYear
       );
-
       button.setAttribute(
         'aria-pressed',
         date === selectedDate ? 'true' : 'false'
@@ -644,6 +643,7 @@
         clearResults();
         renderCalendar();
 
+        // Tastaturfokus nach dem Neuaufbau erhalten.
         const selected = el('days').querySelector('.selected');
         if (selected) selected.focus();
       });
@@ -668,7 +668,7 @@
     renderCalendar();
   }
 
-  function changeView() {
+  function changeCalendarView() {
     if (busy) return;
 
     viewYear = Number(el('year').value);
@@ -682,7 +682,7 @@
     busy = value;
     el('controls').disabled = value;
     el('form').setAttribute('aria-busy', value ? 'true' : 'false');
-    el('send').textContent = value ? 'Kalkulado…' : 'Sendi';
+    el('send').textContent = value ? 'Kalkulado...' : 'Sendi';
   }
 
   function appendCell(row, text) {
@@ -692,26 +692,6 @@
   }
 
   function renderResult(result) {
-    if (
-      !result ||
-      !Array.isArray(result.eventoj) ||
-      !Array.isArray(result.avertoj) ||
-      typeof result.kurboPreta !== 'boolean' ||
-      typeof result.niveloMesagho !== 'string' ||
-      (
-        result.kurboPreta
-          ? typeof result.nivelo !== 'string'
-          : result.nivelo !== null
-      ) ||
-      (
-        result.kurboPreta
-          ? typeof result.analizaPeriodo !== 'string'
-          : result.analizaPeriodo !== null
-      )
-    ) {
-      throw new Error('Nevalida respondo.');
-    }
-
     el('resultTitle').textContent = 'Rezultoj por ' + result.dato;
 
     el('levelTime').textContent =
@@ -728,9 +708,6 @@
       el('levelMessage').hidden = false;
     }
 
-    el('levelDatum').textContent =
-      'Alto-referenco lau la fontodosiero: ' + result.referenco + '.';
-
     const body = el('events');
     body.replaceChildren();
 
@@ -744,23 +721,14 @@
 
     el('noEvents').hidden = result.eventoj.length > 0;
 
-    const list = el('warnings');
-    list.replaceChildren();
+    const warnings = el('warnings');
+    warnings.replaceChildren();
 
     result.avertoj.forEach(text => {
       const item = document.createElement('li');
       item.textContent = text;
-      list.appendChild(item);
+      warnings.appendChild(item);
     });
-
-    if (result.kurboPreta) {
-      el('analysisPeriod').textContent =
-        'Analiza periodo en UTK: ' + result.analizaPeriodo + '.';
-      el('analysisPeriod').hidden = false;
-    } else {
-      el('analysisPeriod').textContent = '';
-      el('analysisPeriod').hidden = true;
-    }
 
     el('modelDate').textContent =
       'Modelaro importita je ' + result.importita + '.';
@@ -772,6 +740,7 @@
 
   el('form').addEventListener('submit', event => {
     event.preventDefault();
+
     if (busy) return;
 
     const date = selectedDate;
@@ -787,7 +756,7 @@
 
     clearResults();
     setBusy(true);
-    el('status').textContent = 'Kalkulado… Bonvolu atendi.';
+    el('status').textContent = 'Kalkulado... Bonvolu atendi.';
 
     google.script.run
       .withSuccessHandler(result => {
@@ -810,6 +779,8 @@
       })
       .withFailureHandler(() => {
         setBusy(false);
+
+        // Keine unübersetzten Google-Fehler in der Oberfläche anzeigen.
         showError(
           'Ne eblis kontakti la servilon au plenumi la kalkulon. ' +
           'Bonvolu reprovi.'
@@ -820,16 +791,19 @@
 
   el('previous').addEventListener('click', () => moveMonth(-1));
   el('next').addEventListener('click', () => moveMonth(1));
-  el('month').addEventListener('change', changeView);
-  el('year').addEventListener('change', changeView);
+
+  el('month').addEventListener('change', changeCalendarView);
+  el('year').addEventListener('change', changeCalendarView);
+
   el('hour').addEventListener('change', clearResults);
   el('minute').addEventListener('change', clearResults);
+
   el('now').addEventListener('click', useNow);
 
   setupOptions();
   useNow();
 
-  // Absichtlich kein Berechnungsaufruf beim Laden.
+  // Absichtlich kein Berechnungsaufruf beim Laden der Seite.
 </script>
 </body>
 </html>
