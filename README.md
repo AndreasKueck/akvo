@@ -223,6 +223,13 @@ La uzo de tiu komponantaro por la akvonivela kurbo estas
 kombino de la du metodaj fontoj; ghi ne estas per si mem
 validigo de tiu etendo.
 
+## Chi-rilataj Snapchat-lensoj
+
+Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento de neegalajhoj:
+
+- [Akvoniveloj](https://www.snapchat.com/lens/ca26de21a63f4056a5296b834ff293ee) (pri Rechtenfleth; tiurilata [GitHub-deponejo](https://github.com/AndreasKueck/lensstudioakvonivelojdato))
+- [Hamburgo](https://www.snapchat.com/lens/7864f71274a5419ea250a39cd30bdaf0) (pri Hamburg &ndash; St. Pauli)
+
 ## Gravaj limoj
 
 **Ne temas pri oficiala prognozo au aktualaj mezuroj.**
