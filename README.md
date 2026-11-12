@@ -237,6 +237,7 @@ Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento 
 
 - [Akvoniveloj](https://www.snapchat.com/lens/ca26de21a63f4056a5296b834ff293ee) (pri Rechtenfleth; tiurilata [GitHub-deponejo](https://github.com/AndreasKueck/lensstudioakvonivelojdato))
 - [Hamburgo](https://www.snapchat.com/lens/7864f71274a5419ea250a39cd30bdaf0) (pri Hamburg &ndash; St. Pauli)
+- [Otterndorf: lutroj](https://www.snapchat.com/lens/50f43a556e734ace9e332e4308d9c7c5) (pri Otterndorf)
 
 ## Gravaj limoj
 
