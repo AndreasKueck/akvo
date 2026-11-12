@@ -297,7 +297,7 @@ function eksportiModelojn_() {
     JSON.stringify(bundle, null, 2) +
     ';\n';
 
-  const name = 'brv_modeloj_' +
+  const name = 'otterndorf_modeloj_' +
     Utilities.formatDate(new Date(), 'UTC', 'yyyyMMdd_HHmmss') +
     '.txt';
 
