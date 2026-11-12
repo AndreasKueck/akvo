@@ -253,5 +253,5 @@ Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento 
 - Ekster la analizita periodo temas pri ekstrapolo.
   La elektebla jarintervalo 1900–2100 estas nur teknika
   limo, ne garantio pri valideco.
-- Ne uzu la rezultojn, kiel solan bazon por navigado
+- Ne uzu la rezultojn, kiel solan bazon por navigacio
   au sekurecaj decidoj.
