@@ -266,6 +266,7 @@ Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento 
 - [Hamburgo](https://www.snapchat.com/lens/7864f71274a5419ea250a39cd30bdaf0) (pri Hamburg &ndash; St. Pauli)
 - [Norderney: maro](https://www.snapchat.com/lens/f2e79b925a064537bc979a49c8d8dd95) (pri Norderney)
 - [Otterndorf: lutroj](https://www.snapchat.com/lens/50f43a556e734ace9e332e4308d9c7c5) (pri Otterndorf)
+- [Papenburg: shipoj](https://www.snapchat.com/lens/3e3074595b624a3e86b5c039a3d0456c) (pri Papenburg)
 
 ## Gravaj limoj
 
