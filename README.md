@@ -272,6 +272,7 @@ Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento 
 - [Bremervoerde: akvo](https://www.snapchat.com/lens/7f351531a2e0413783f4af6ec51723d2) (pri Bremervörde)
 - [Glueckstadt: pramo](https://www.snapchat.com/lens/89aa9d0222244c74a059088aff0312ab) (pri Glückstadt)
 - [Hamburgo](https://www.snapchat.com/lens/7864f71274a5419ea250a39cd30bdaf0) (pri Hamburg &ndash; St. Pauli)
+- [Hechthausen: ezoko](https://www.snapchat.com/lens/fa246d0497b1461aaf531d10901dfa23) (pri Hechthausen)
 - [Norderney: maro](https://www.snapchat.com/lens/f2e79b925a064537bc979a49c8d8dd95) (pri Norderney)
 - [Otterndorf: lutroj](https://www.snapchat.com/lens/50f43a556e734ace9e332e4308d9c7c5) (pri Otterndorf)
 - [Papenburg: shipoj](https://www.snapchat.com/lens/3e3074595b624a3e86b5c039a3d0456c) (pri Papenburg)
