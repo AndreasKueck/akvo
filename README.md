@@ -12,7 +12,7 @@ Estis kreitaj pliaj ret-apoj kun la sama celo por aliaj lokoj:
 - "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)"
 - "[Glückstadt: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxZfSR32y1MrSwdr4DsdU24eXOp0NL5WLtfuKBJgJdwwCqxFW16sVHdTTj_TVE7pX83/exec)"
 - "[Hamburgo ‒ St. Pauli: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzrddFJWsO8ivLMrhQv5MbLxcSPl1NPi1-XTWVOSI6zu_Zp0k-q60kzfUw5sfSte2tA/exec)"
-- "[Hechhausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxK0LmZ3yBFVjqOT4s4z4UhicB5nc8CvHRa7e9WQkOsKowsshISoKHylOo1Or-D4EWH5g/exec)"
+- "[Hechthausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxK0LmZ3yBFVjqOT4s4z4UhicB5nc8CvHRa7e9WQkOsKowsshISoKHylOo1Or-D4EWH5g/exec)"
 - "[Norderney: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwFMJk10hFb-XSNX8vWRIc0XnJmAcB1CJPh4YbPHqJI12caPHM9UmWVr1I5ry57LwrG3g/exec)"
 - "[Otterndorf: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxYD6-T92Png1jSSJ8nV1P7-PLL9-aI_t95G0B4I_VCJtB7geKNKlFE8X68KMPsnfSk/exec)"
 - "[Papenburg: akvoniveloj](https://script.google.com/macros/s/AKfycbwGAUAULHxlc9ETGTuYQMGaBENda7gXAC9qRi8G8cyJiJk3npeqZZ_nKJom8vOO05CEhQ/exec)"
