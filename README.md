@@ -17,6 +17,7 @@ Estis kreitaj pliaj ret-apoj kun la sama celo por aliaj lokoj:
 - "[Hamburgo ‒ St. Pauli: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzrddFJWsO8ivLMrhQv5MbLxcSPl1NPi1-XTWVOSI6zu_Zp0k-q60kzfUw5sfSte2tA/exec)"
 - "[Hechthausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxK0LmZ3yBFVjqOT4s4z4UhicB5nc8CvHRa7e9WQkOsKowsshISoKHylOo1Or-D4EWH5g/exec)"
 - "[Norderney: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwFMJk10hFb-XSNX8vWRIc0XnJmAcB1CJPh4YbPHqJI12caPHM9UmWVr1I5ry57LwrG3g/exec)"
+- "[Oldenburg ‒ Drielake: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwkI1b6nJRZvZ_-UKx04XBt97SlzdxIVCCmSrNN2OWL_i7wyHb5j-G9NlzF2KpIOf4Pbw/exec)"
 - "[Otterndorf: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxYD6-T92Png1jSSJ8nV1P7-PLL9-aI_t95G0B4I_VCJtB7geKNKlFE8X68KMPsnfSk/exec)"
 - "[Papenburg: akvoniveloj](https://script.google.com/macros/s/AKfycbwGAUAULHxlc9ETGTuYQMGaBENda7gXAC9qRi8G8cyJiJk3npeqZZ_nKJom8vOO05CEhQ/exec)"
 - "[Wilhelmshaven ‒ Alter Vorhafen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzAR1q8kD4qGaxGNSrn7D_kSkEik7XbE9Dy8Msd0a9DZZAi5XT6vH4JBXZ7ar432AIbdg/exec)"
@@ -129,6 +130,12 @@ akvo/
         └── retapo/
             ├── Code.gs
             └── index.html
+    └── oldenburg/
+        ├── analizo/
+            └── hddu.gs
+        └── retapo/
+            ├── Code.gs
+            └── index.html
     └── otterndorf/
         ├── analizo/
             └── hddu.gs
@@ -164,6 +171,7 @@ akvo/
 - [`aliaj_lokoj/hamburgo_st_pauli`](aliaj_lokoj/hamburgo_st_pauli/): pri Hamburgo &ndash; St. Pauli:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; la analizitaj akvonivelaj mezurvaloroj venas de [Mess-Station Hamburg St. Pauli, Wasserstraßen- und Schifffahrtsverwaltung des Bundes, www.kuestendaten.de, elshutdato: 2026-11-10](https://www.kuestendaten.de/DE/Services/Messreihen_Dateien_Download/Download_Zeitreihen_node);<br>jen ret-apo "[Hamburgo ‒ St. Pauli: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzrddFJWsO8ivLMrhQv5MbLxcSPl1NPi1-XTWVOSI6zu_Zp0k-q60kzfUw5sfSte2tA/exec)".
 - [`aliaj_lokoj/hechthausen`](aliaj_lokoj/hechthausen/): pri Hechthausen:<br>`aliaj_lokoj/hechthausen/analizo/hddu.gs` kaj `aliaj_lokoj/hechthausen/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Hechthausen, numero 5980030](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980030);<br>jen ret-apo "[Hechthausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxK0LmZ3yBFVjqOT4s4z4UhicB5nc8CvHRa7e9WQkOsKowsshISoKHylOo1Or-D4EWH5g/exec)".
 - [`aliaj_lokoj/norderney`](aliaj_lokoj/norderney/): pri Norderney:<br>`aliaj_lokoj/norderney/analizo/hddu.gs` kaj `aliaj_lokoj/norderney/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Norderney Riffgat, numero 9360010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=9360010);<br>jen ret-apo "[Norderney: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwFMJk10hFb-XSNX8vWRIc0XnJmAcB1CJPh4YbPHqJI12caPHM9UmWVr1I5ry57LwrG3g/exec)".
+- [`aliaj_lokoj/oldenburg`](aliaj_lokoj/oldenburg/): pri Oldenburg &ndash; Alter Drielake:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; la analizitaj akvonivelaj mezurvaloroj venas de [staciaj datumoj de Oldenburg Drielake, numero 4960030](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4960030);<br>jen ret-apo "[Oldenburg ‒ Drielake: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwkI1b6nJRZvZ_-UKx04XBt97SlzdxIVCCmSrNN2OWL_i7wyHb5j-G9NlzF2KpIOf4Pbw/exec)".
 - [`aliaj_lokoj/otterndorf`](aliaj_lokoj/otterndorf/): pri Otterndorf:<br>`aliaj_lokoj/otterndorf/analizo/hddu.gs` kaj `aliaj_lokoj/otterndorf/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Otterndorf, numero 5990011](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5990011);<br>jen ret-apo "[Otterndorf: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxYD6-T92Png1jSSJ8nV1P7-PLL9-aI_t95G0B4I_VCJtB7geKNKlFE8X68KMPsnfSk/exec)".
 - [`aliaj_lokoj/papenburg`](aliaj_lokoj/papenburg/): pri Papenburg:<br>`aliaj_lokoj/papenburg/analizo/hddu.gs` kaj `aliaj_lokoj/pepenburg/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Papenburg, numero 3790010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=3790010);<br>jen ret-apo "[Papenburg: akvoniveloj](https://script.google.com/macros/s/AKfycbwGAUAULHxlc9ETGTuYQMGaBENda7gXAC9qRi8G8cyJiJk3npeqZZ_nKJom8vOO05CEhQ/exec)".
 - [`aliaj_lokoj/wilhelmshaven`](aliaj_lokoj/wilhelmshaven/): pri Wilhelmshaven &ndash; Alter Vorhafen:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; la analizitaj akvonivelaj mezurvaloroj venas de [staciaj datumoj de Wilhelmshaven Alter Vorhafen, numero 9440020](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=9440020);<br>jen ret-apo "Wilhelmshaven ‒ Alter Vorhafen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbzAR1q8kD4qGaxGNSrn7D_kSkEik7XbE9Dy8Msd0a9DZZAi5XT6vH4JBXZ7ar432AIbdg/exec)".
