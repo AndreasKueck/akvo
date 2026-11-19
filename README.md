@@ -332,6 +332,7 @@ validigo de tiu etendo.
 Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento de neegalajhoj:
 
 - [Akvoniveloj](https://www.snapchat.com/lens/ca26de21a63f4056a5296b834ff293ee) (pri Rechtenfleth; tiurilata [GitHub-deponejo](https://github.com/AndreasKueck/lensstudioakvonivelojdato))
+- [Arto de navigacio](https://www.snapchat.com/lens/3b5d64d98f0743ff9fffa5b96f101684) (pri Elsfleth Ohrt)
 - [Bremerhaven: veloj](https://www.snapchat.com/lens/1943397607b64916bf6b4396d9d154e7) (pri Bremerhaven &ndash; Alter Leuchtturm)
 - [Bremervoerde: akvo](https://www.snapchat.com/lens/7f351531a2e0413783f4af6ec51723d2) (pri Bremervörde)
 - [Glueckstadt: pramo](https://www.snapchat.com/lens/89aa9d0222244c74a059088aff0312ab) (pri Glückstadt)
