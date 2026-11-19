@@ -12,6 +12,7 @@ Estis kreitaj pliaj ret-apoj kun la sama celo por aliaj lokoj:
 - "[Bremen ‒ Oslebshausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwMCbCHyS0efZdNoQ1ThOqyEEOjQ27PporNrxoED3J3N0PLXnG5o0WJ3f8TvFWVzNq_bw/exec)"
 - "[Bremerhaven ‒ Alter Leuchtturm: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwhrCptnMjEJhwO5PraT78B_md-0yBp_uEHWluGCF5x39fTHk8cdiK74j1lufHLa1sc/exec)"
 - "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)"
+- "[Cuxhaven ‒ Steubenhöft: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwKllsiz0caZM_nTfrmgXHnggm5Go8bxin5h6yhkjjHa2-myTmRu7fDIbNZxsVo4aZp8Q/exec)"
 - "[Elsfleth Ohrt: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbymzldC7yNgGHjzjRIMLC9ituSb08VITchFJWg24o55AtuCowpipnmQCUU-K8JieiAJ/exec)"
 - "[Emden: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwi1sFEr8CtKeDWl3LqQQnwYunqg7-H7NVmuoBAOVLScfaZqOqOqiXPwSNsLe3DxMS6sw/exec)"
 - "[Glückstadt: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxZfSR32y1MrSwdr4DsdU24eXOp0NL5WLtfuKBJgJdwwCqxFW16sVHdTTj_TVE7pX83/exec)"
@@ -103,6 +104,12 @@ akvo/
         └── retapo/
             ├── Code.gs
             └── index.html
+    └── cuxhaven/
+        ├── analizo/
+            └── hddu.gs
+        └── retapo/
+            ├── Code.gs
+            └── index.html
     └── elsfleth/
         ├── analizo/
             └── hddu.gs
@@ -184,9 +191,10 @@ akvo/
 - [`retapo/index.html`](retapo/index.html): kalendaro, horelekto
   kaj montrado de rezultoj.
 - [`aliaj_lokoj/belum`](aliaj_lokoj/belum/): pri Belum:<br>`aliaj_lokoj/belum/analizo/hddu.gs` kaj `aliaj_lokoj/belum/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Belum, numero 5980060](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980060);<br>jen ret-apo "[Belum: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwYKQYvG8XhRLoWLwzaNUlmbmF5rltLOVySPOghF-7qDxIlBSGbF0tslFoAxot-hc0e/exec)".
-- [`aliaj_lokoj/bremen`](aliaj_lokoj/bremen/): pri Bremen &ndash; Alter Oslebshausen:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; la analizitaj akvonivelaj mezurvaloroj venas de [staciaj datumoj de Bremen Oslebshausen, numero 4910060](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4910060);<br>jen ret-apo "[Bremen ‒ Oslebshausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwMCbCHyS0efZdNoQ1ThOqyEEOjQ27PporNrxoED3J3N0PLXnG5o0WJ3f8TvFWVzNq_bw/exec)".
+- [`aliaj_lokoj/bremen`](aliaj_lokoj/bremen/): pri Bremen &ndash; Oslebshausen:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; la analizitaj akvonivelaj mezurvaloroj venas de [staciaj datumoj de Bremen Oslebshausen, numero 4910060](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4910060);<br>jen ret-apo "[Bremen ‒ Oslebshausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwMCbCHyS0efZdNoQ1ThOqyEEOjQ27PporNrxoED3J3N0PLXnG5o0WJ3f8TvFWVzNq_bw/exec)".
 - [`aliaj_lokoj/bremerhaven`](aliaj_lokoj/bremerhaven/): pri Bremerhaven &ndash; Alter Leuchtturm:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; la analizitaj akvonivelaj mezurvaloroj venas de [staciaj datumoj de Bremerhaven Alter Leuchtturm, numero 4990010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4990010);<br>jen ret-apo "[Bremerhaven ‒ Alter Leuchtturm: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwhrCptnMjEJhwO5PraT78B_md-0yBp_uEHWluGCF5x39fTHk8cdiK74j1lufHLa1sc/exec)".
 - [`aliaj_lokoj/brv`](aliaj_lokoj/brv/): pri Bremervörde (brv):<br>`aliaj_lokoj/brv/analizo/hddu.gs` kaj `aliaj_lokoj/brv/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Bremervörde, numero 5980010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980010);<br>jen ret-apo "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)".
+- [`aliaj_lokoj/cuxhaven`](aliaj_lokoj/cuxhaven/): pri Cuxhaven &ndash; Steubenhöft:<br>`aliaj_lokoj/cuxhaven/analizo/hddu.gs` kaj `aliaj_lokoj/cuxhaven/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Cuxhaven Steubenhöft, numero 5990020](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5990020);<br>jen ret-apo "[Cuxhaven ‒ Steubenhöft: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwKllsiz0caZM_nTfrmgXHnggm5Go8bxin5h6yhkjjHa2-myTmRu7fDIbNZxsVo4aZp8Q/exec)".
 - [`aliaj_lokoj/elsfleth`](aliaj_lokoj/elsfleth/): pri Elsfleth Ohrt:<br>`aliaj_lokoj/elsfleth/analizo/hddu.gs` kaj `aliaj_lokoj/elsfleth/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Elsfleth Ohrt, numero 4960080](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4960080);<br>jen ret-apo "[Elsfleth Ohrt: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbymzldC7yNgGHjzjRIMLC9ituSb08VITchFJWg24o55AtuCowpipnmQCUU-K8JieiAJ/exec)".
 - [`aliaj_lokoj/emden`](aliaj_lokoj/emden/): pri Emden:<br>`aliaj_lokoj/emden/analizo/hddu.gs` kaj `aliaj_lokoj/emden/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Emden, numero 3970010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=3970010);<br>jen ret-apo "[Emden: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwi1sFEr8CtKeDWl3LqQQnwYunqg7-H7NVmuoBAOVLScfaZqOqOqiXPwSNsLe3DxMS6sw/exec)".
 - [`aliaj_lokoj/glueckstadt`](aliaj_lokoj/glueckstadt/): pri Glückstadt:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; la analizitaj akvonivelaj mezurvaloroj venas de [staciaj datumoj de Glückstadt, numero 5970035](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5970035);<br>jen ret-apo "[Glückstadt: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbxZfSR32y1MrSwdr4DsdU24eXOp0NL5WLtfuKBJgJdwwCqxFW16sVHdTTj_TVE7pX83/exec)".
