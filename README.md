@@ -31,11 +31,11 @@ aperas en metroj.
 
 ## Kiel la projekto estighis
 
-La bazo estas minutaj akvonivelaj mezurvaloroj en centimetroj,
+La bazo estas akvonivelaj mezurvaloroj
 venantaj de **PEGELONLINE de la germana federacia administracio
-pri akvovojoj kaj shipiro (WSV)**:
+pri akvovojoj kaj shipiro ("[Wasserstraßen- und Schifffahrtsverwaltung des Bundes](https://pegelonline.wsv.de/gast/impressum)", WSV)**:
 
-- [Staciaj datumoj de Rechtenfleth, numero 4970030](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4970030)
+- [Staciaj datumoj de Rechtenfleth, numero 4970030](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4970030) (pri la numeroj de aliaj lokoj vidu malsupre che la koncerna loko)
 
 Por la analizo la mezuroj estis konservitaj en kvar
 Guglo-kalkultabeloj por la periodoj 2007–2010, 2011–2015,
