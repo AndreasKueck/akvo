@@ -2,12 +2,13 @@
 
 Tiu chi GitHub-deponejo priskribas Guglo-Apoj-Skripto-projekton por neoficiala astronomia prognozo de
 akvoniveloj en Rechtenfleth lau la harmona prezento de neegalajhoj (germane: "harmonische Darstellung der Ungleichheiten", angle: "harmonic representation of inequalities").
+Koncerne germanajn lokojn prognozoj per la harmona prezento de neegalajhoj ordinare estas pli proksimaj al oficialaj prognozoj kaj al la realo, ol prognozoj per la harmona metodo (surbaze de ghi jen [ret-apo](https://script.google.com/a/~/macros/s/AKfycbzgeChQUzIlVM5wmtsrmwZkNNJUZgFLLPvtYkNztVaFhHHq2xp3NqImx2uolmQw_qBG4g/exec)).
 
 Ret-apo "[Rechtenfleth: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbw1p6S3LyNaRTIcSu4myv3SP-ZzSX302erglMDh8R9wwq1ZRAHCwJ8Nb9q5t-Isl0aX/exec)" kaj Android-apo "Akvo" (elshut-ligilo estas en la ret-apo-pagho) eligas la
 akvonivelon por elektita momento kaj krome la tempojn kaj altojn de la
 maksimumaj kaj minimumaj akvoniveloj de elektita tago.
 
-Estis kreitaj pliaj ret-apoj kun la sama celo por aliaj lokoj:
+Estis kreitaj pliaj ret-apoj kun la sama celo kaj surbaze de la harmona prezento de neegalajhoj por aliaj lokoj:
 - "[Belum: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwYKQYvG8XhRLoWLwzaNUlmbmF5rltLOVySPOghF-7qDxIlBSGbF0tslFoAxot-hc0e/exec)"
 - "[Bremen ‒ Oslebshausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwMCbCHyS0efZdNoQ1ThOqyEEOjQ27PporNrxoED3J3N0PLXnG5o0WJ3f8TvFWVzNq_bw/exec)"
 - "[Bremerhaven ‒ Alter Leuchtturm: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwhrCptnMjEJhwO5PraT78B_md-0yBp_uEHWluGCF5x39fTHk8cdiK74j1lufHLa1sc/exec)"
