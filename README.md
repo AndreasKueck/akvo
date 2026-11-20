@@ -29,7 +29,7 @@ Estis kreitaj pliaj ret-apoj kun la sama celo por aliaj lokoj:
 Chiuj tempoj estas en UTK. Akvoniveloj
 aperas en metroj.
 
-## Kiel la projekto estighis
+## Fonto de la analizitaj akvonivelaj mezurvaloroj
 
 La bazo estas akvonivelaj mezurvaloroj
 venantaj de **PEGELONLINE de la germana federacia administracio
