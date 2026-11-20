@@ -343,6 +343,7 @@ Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento 
 - [Arto de navigacio](https://www.snapchat.com/lens/3b5d64d98f0743ff9fffa5b96f101684) (pri Elsfleth Ohrt)
 - [Bremerhaven: veloj](https://www.snapchat.com/lens/1943397607b64916bf6b4396d9d154e7) (pri Bremerhaven &ndash; Alter Leuchtturm)
 - [Bremervoerde: akvo](https://www.snapchat.com/lens/7f351531a2e0413783f4af6ec51723d2) (pri Bremervörde)
+- [Enfluejo de Elbo](https://www.snapchat.com/lens/fa3570d0355d4441ad51680c369aa4b6) (pri Cuxhaven &ndash; Steubenhöft)
 - [Glueckstadt: pramo](https://www.snapchat.com/lens/89aa9d0222244c74a059088aff0312ab) (pri Glückstadt)
 - [Hamburgo](https://www.snapchat.com/lens/7864f71274a5419ea250a39cd30bdaf0) (pri Hamburg &ndash; St. Pauli)
 - [Hechthausen: ezoko](https://www.snapchat.com/lens/fa246d0497b1461aaf531d10901dfa23) (pri Hechthausen)
