@@ -345,6 +345,7 @@ Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento 
 - [Bremerhaven: veloj](https://www.snapchat.com/lens/1943397607b64916bf6b4396d9d154e7) (pri Bremerhaven &ndash; Alter Leuchtturm)
 - [Bremervoerde: akvo](https://www.snapchat.com/lens/7f351531a2e0413783f4af6ec51723d2) (pri Bremervörde)
 - [Enfluejo de Elbo](https://www.snapchat.com/lens/fa3570d0355d4441ad51680c369aa4b6) (pri Cuxhaven &ndash; Steubenhöft)
+- [Germana Golfo](https://www.snapchat.com/lens/a6486798c40946a38d1b6885fc3dc018) (pri Helgoland &ndash; Binnenhafen)
 - [Glueckstadt: pramo](https://www.snapchat.com/lens/89aa9d0222244c74a059088aff0312ab) (pri Glückstadt)
 - [Hamburgo](https://www.snapchat.com/lens/7864f71274a5419ea250a39cd30bdaf0) (pri Hamburg &ndash; St. Pauli)
 - [Hechthausen: ezoko](https://www.snapchat.com/lens/fa246d0497b1461aaf531d10901dfa23) (pri Hechthausen)
@@ -355,6 +356,7 @@ Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento 
 - [Otterndorf: lutroj](https://www.snapchat.com/lens/50f43a556e734ace9e332e4308d9c7c5) (pri Otterndorf)
 - [Papenburg: shipoj](https://www.snapchat.com/lens/3e3074595b624a3e86b5c039a3d0456c) (pri Papenburg)
 - [Urbaj muzikistoj](https://www.snapchat.com/lens/a196485d4f9245ed90bb6995af8cdb0b) (pri Bremen &ndash; Oslebshausen)
+- [Vadmaro](https://www.snapchat.com/lens/edc373a0b4ea4aaa893205f743fc1ab9) (pri Wilhelmshaven &ndash; Alter Vorhafen)
 
 ## Gravaj limoj
 
