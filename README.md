@@ -352,6 +352,7 @@ Jenaj Snapchat-lensoj montras akvonivelojn prognozitajn per la harmona prezento 
 - [Hunte: akvoniveloj](https://www.snapchat.com/lens/c94014f602a848e2af2106419e723eca) (pri Oldenburg &ndash; Drielake)
 - [Husum: korboseghoj](https://www.snapchat.com/lens/2ede3d8dfd9744d5bb2db59f322715a3) (pri Husum)
 - [Norderney: maro](https://www.snapchat.com/lens/f2e79b925a064537bc979a49c8d8dd95) (pri Norderney)
+- [Orientfrislando](https://www.snapchat.com/lens/97953dfaf5a1472290cd1d6e42501841) (pri Emden)
 - [Oste-bariero](https://www.snapchat.com/lens/bbd5babf3e424014a18509ef2b384074) (pri Belum)
 - [Otterndorf: lutroj](https://www.snapchat.com/lens/50f43a556e734ace9e332e4308d9c7c5) (pri Otterndorf)
 - [Papenburg: shipoj](https://www.snapchat.com/lens/3e3074595b624a3e86b5c039a3d0456c) (pri Papenburg)
