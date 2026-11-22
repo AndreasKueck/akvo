@@ -749,7 +749,7 @@ function curveGridValue_(j, bundle) {
 function makeWarnings_(bundle, start, time, events) {
   const warnings = [
     'Neoficiala astronomia prognozo de maksimuma kaj minimuma akvoniveloj, ne de mezuritaj akvoniveloj. ' +
-    'Ne uzu ghin kiel solan bazon por navigado au sekurecaj decidoj.',
+    'Uzu ghin nur por nekomercaj au sciencaj celoj, kaj ne uzu ghin, kiel solan bazon por navigacio au sekurecaj decidoj.',
 
     'Vento, aerpremo kaj aktualaj riveraj alfluoj ne estas prognozataj.',
 
