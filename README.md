@@ -13,6 +13,7 @@ Estis kreitaj pliaj ret-apoj kun la sama celo kaj surbaze de la harmona prezento
 - "[Bremen ‒ Oslebshausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwMCbCHyS0efZdNoQ1ThOqyEEOjQ27PporNrxoED3J3N0PLXnG5o0WJ3f8TvFWVzNq_bw/exec)"
 - "[Bremerhaven ‒ Alter Leuchtturm: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwhrCptnMjEJhwO5PraT78B_md-0yBp_uEHWluGCF5x39fTHk8cdiK74j1lufHLa1sc/exec)"
 - "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)"
+- "[Cape d'Or: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwLg10h9pXC95lafWaZ0Z0hTJJ1rwtbXZUxCjPaH-pZIZ4-FBzaMgcHWz1mNVm-8ZkDsw/exec)"
 - "[Cuxhaven ‒ Steubenhöft: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwKllsiz0caZM_nTfrmgXHnggm5Go8bxin5h6yhkjjHa2-myTmRu7fDIbNZxsVo4aZp8Q/exec)"
 - "[Elsfleth Ohrt: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbymzldC7yNgGHjzjRIMLC9ituSb08VITchFJWg24o55AtuCowpipnmQCUU-K8JieiAJ/exec)"
 - "[Emden: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwi1sFEr8CtKeDWl3LqQQnwYunqg7-H7NVmuoBAOVLScfaZqOqOqiXPwSNsLe3DxMS6sw/exec)"
@@ -100,6 +101,12 @@ akvo/
             ├── Code.gs
             └── index.html
     └── brv/
+        ├── analizo/
+            └── hddu.gs
+        └── retapo/
+            ├── Code.gs
+            └── index.html
+    └── cape_d_or/
         ├── analizo/
             └── hddu.gs
         └── retapo/
@@ -195,6 +202,7 @@ akvo/
 - [`aliaj_lokoj/bremen`](aliaj_lokoj/bremen/): pri Bremen &ndash; Oslebshausen:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; la analizitaj akvonivelaj mezurvaloroj venas de [staciaj datumoj de Bremen Oslebshausen, numero 4910060](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4910060);<br>jen ret-apo "[Bremen ‒ Oslebshausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwMCbCHyS0efZdNoQ1ThOqyEEOjQ27PporNrxoED3J3N0PLXnG5o0WJ3f8TvFWVzNq_bw/exec)".
 - [`aliaj_lokoj/bremerhaven`](aliaj_lokoj/bremerhaven/): pri Bremerhaven &ndash; Alter Leuchtturm:<br>La programoj estas analogaj al tiuj pri Rechtenfleth; la analizitaj akvonivelaj mezurvaloroj venas de [staciaj datumoj de Bremerhaven Alter Leuchtturm, numero 4990010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4990010);<br>jen ret-apo "[Bremerhaven ‒ Alter Leuchtturm: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwhrCptnMjEJhwO5PraT78B_md-0yBp_uEHWluGCF5x39fTHk8cdiK74j1lufHLa1sc/exec)".
 - [`aliaj_lokoj/brv`](aliaj_lokoj/brv/): pri Bremervörde (brv):<br>`aliaj_lokoj/brv/analizo/hddu.gs` kaj `aliaj_lokoj/brv/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Bremervörde, numero 5980010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5980010);<br>jen ret-apo "[Bremervörde: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbyEGdBNs6A7V9TTm5XicPGa8ai3B3m4iP-JBaY0D3NeoEbGWSdlFMU1NOlwwSgw3NK5/exec)".
+- [`aliaj_lokoj/cape_d_or`](aliaj_lokoj/cape_d_or/): pri Cape d'Or:<br>`aliaj_lokoj/cape_d_or/analizo/hddu.gs` kaj `aliaj_lokoj/cape_d_or/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj de 1965-06-09 05:00 UTK ghis 1979-12-29 04:00 UTK elshutitaj en 2026-11-21 el `https://www.isdm-gdsi.gc.ca/isdm-gdsi/twl-mne/inventory-inventaire/sd-ds-eng.asp?no=240&user=isdm-gdsi&amp;region=MEDS` funkciigata de Fisheries and Oceans Canada (DFO) / Canadian Hydrographic Service (CHS); krome temas pri akvoniveloj mezuritaj ne en chiu minuto, sed en chiu horo;<br>jen ret-apo "[Cape d'Or: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwLg10h9pXC95lafWaZ0Z0hTJJ1rwtbXZUxCjPaH-pZIZ4-FBzaMgcHWz1mNVm-8ZkDsw/exec)".
 - [`aliaj_lokoj/cuxhaven`](aliaj_lokoj/cuxhaven/): pri Cuxhaven &ndash; Steubenhöft:<br>`aliaj_lokoj/cuxhaven/analizo/hddu.gs` kaj `aliaj_lokoj/cuxhaven/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Cuxhaven Steubenhöft, numero 5990020](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=5990020);<br>jen ret-apo "[Cuxhaven ‒ Steubenhöft: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwKllsiz0caZM_nTfrmgXHnggm5Go8bxin5h6yhkjjHa2-myTmRu7fDIbNZxsVo4aZp8Q/exec)".
 - [`aliaj_lokoj/elsfleth`](aliaj_lokoj/elsfleth/): pri Elsfleth Ohrt:<br>`aliaj_lokoj/elsfleth/analizo/hddu.gs` kaj `aliaj_lokoj/elsfleth/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Elsfleth Ohrt, numero 4960080](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4960080);<br>jen ret-apo "[Elsfleth Ohrt: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbymzldC7yNgGHjzjRIMLC9ituSb08VITchFJWg24o55AtuCowpipnmQCUU-K8JieiAJ/exec)".
 - [`aliaj_lokoj/emden`](aliaj_lokoj/emden/): pri Emden:<br>`aliaj_lokoj/emden/analizo/hddu.gs` kaj `aliaj_lokoj/emden/retapo/Code.gs` estas programitaj kun modifoj, nome kun konsidero je tio, ke tempajn brechojn havas la serio de la analizitaj akvonivelaj mezurvaloroj venantaj de [staciaj datumoj de Emden, numero 3970010](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=3970010);<br>jen ret-apo "[Emden: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwi1sFEr8CtKeDWl3LqQQnwYunqg7-H7NVmuoBAOVLScfaZqOqOqiXPwSNsLe3DxMS6sw/exec)".
