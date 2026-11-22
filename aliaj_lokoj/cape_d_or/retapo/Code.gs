@@ -749,7 +749,7 @@ function curveGridValue_(j, bundle) {
 function makeWarnings_(bundle, start, time, events) {
   const warnings = [
     'Neoficiala astronomia prognozo de maksimuma kaj minimuma akvoniveloj, ne de mezuritaj akvoniveloj. ' +
-    'Uzu ghin nur por nekomercaj au sciencaj celoj, kaj ne uzu ghin, kiel solan bazon por navigacio au sekurecaj decidoj.',
+    "Fonto de la analizitaj mezurvaloroj estas Fisheries and Oceans Canada (DFO) / Canadian Hydrographic Service (CHS), stacio Cape d'Or, elshutita en 2026-11-21 el https://www.isdm-gdsi.gc.ca/isdm-gdsi/twl-mne/inventory-inventaire/sd-ds-eng.asp?no=240&user=isdm-gdsi&region=MEDS. La chi-tieaj eligoj rezultas el analizo de la mezurvaloroj fare de la respondeculo pri tiu chi ret-apo, estas neoficialaj kaj nur por scienca au nekomerca uzo kaj krome ne taugas por navigaciaj celoj. La uzanto respondecas pri ghusta interpreto de la eligoj. La uzo de ili ne entenas aprobon fare de CHS au DFO.",
 
     'Vento, aerpremo kaj aktualaj riveraj alfluoj ne estas prognozataj.',
 
