@@ -33,17 +33,29 @@ aperas en metroj.
 
 ## Fonto de la analizitaj akvonivelaj mezurvaloroj
 
-La bazo estas akvonivelaj mezurvaloroj
-venantaj de **PEGELONLINE de la germana federacia administracio
-pri akvovojoj kaj shipiro ("[Wasserstraßen- und Schifffahrtsverwaltung des Bundes](https://pegelonline.wsv.de/gast/impressum)", WSV)**:
+La fonto de la mezurvaloroj dependas de la elektita loko:
 
-- [Staciaj datumoj de Rechtenfleth, numero 4970030](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4970030) (pri la numeroj de aliaj lokoj vidu malsupre che la koncerna loko)
+- **Por la plej multaj germanaj stacioj:** PEGELONLINE de la
+  Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV).
+  La stacinumero kaj la ligilo al la staciaj datumoj estas
+  indikitaj che la koncerna loko.
+- **Por Hamburgo – St. Pauli:** Mess-Station Hamburg St. Pauli,
+  Wasserstraßen- und Schifffahrtsverwaltung des Bundes,
+  [www.kuestendaten.de](https://www.kuestendaten.de/DE/Services/Messreihen_Dateien_Download/Download_Zeitreihen_node).
+  Elshutdato: 2026-11-10.
+- **Por Cape d'Or, Kanado:** Fisheries and Oceans Canada (DFO) /
+  Canadian Hydrographic Service (CHS),
+  [stacio 240](https://www.isdm-gdsi.gc.ca/isdm-gdsi/twl-mne/inventory-inventaire/sd-ds-eng.asp?no=240&user=isdm-gdsi&region=MEDS).
+  La analizita serio enhavas horajn mezurojn kun tempaj brechoj,
+  de 1965-06-09 05:00 UTK ghis 1979-12-29 04:00 UTK.
+  Elshutdato: 2026-11-21.
 
-Por la analizo la mezuroj estis konservitaj en kvar
-Guglo-kalkultabeloj por la periodoj 2007–2010, 2011–2015,
-2016–2020 kaj 2021–2025. La ligita pagho priskribas la
-mezurstacion; ghi ne estas rekta elshuta ligilo al la kvar
-preparitaj kalkultabeloj.
+Por **Rechtenfleth** la fonto estas PEGELONLINE de WSV:
+[staciaj datumoj de Rechtenfleth, numero 4970030](https://pegelonline.wsv.de/gast/stammdaten?pegelnr=4970030).
+Por la analizo de tiu stacio la mezuroj estis konservitaj en
+kvar Guglo-kalkultabeloj por la periodoj 2007–2010, 2011–2015,
+2016–2020 kaj 2021–2025. La ligita pagho priskribas la stacion;
+ghi ne estas rekta elshuta ligilo al la kvar preparitaj tabeloj.
 
 La analizo kaj la ret-apo estas apartaj:
 
