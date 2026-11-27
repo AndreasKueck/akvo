@@ -234,7 +234,7 @@ La analizo uzas **Astronomy Engine 2.1.19** de Don Cross:
 - [Originala projekto kaj dokumentado](https://github.com/cosinekitty/astronomy)
 - [La uzita retumila versio 2.1.19: astronomy.browser.js](https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.js)
 
-Kopiu la kompletan enhavon de tiu Java-dosiero en
+Kopiu la kompletan enhavon de tiu JavaScript-dosiero en
 dosieron `Astronomy.gs` de la analiza Apoj-Skripto-projekto.
 Ghi disponigas la globalan objekton `Astronomy`.
 Ne uzu nur fragmenton de la dosiero au la version destinitan
