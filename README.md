@@ -8,6 +8,16 @@ Ret-apo "[Rechtenfleth: akvoniveloj](https://script.google.com/a/~/macros/s/AKfy
 akvonivelon por elektita momento kaj krome la tempojn kaj altojn de la
 maksimumaj kaj minimumaj akvoniveloj de elektita tago.
 
+### Senreta versio: `niveloj.html`
+
+Dosiero `niveloj.html` enhavas kopion de la pretaj modeloj.
+Ghi kalkulas akvonivelojn en via krozilo sen kontaktado al Guglo,
+datumprovizantoj au alia servilo.
+
+Por uzi tiun dosieron senrete, malfermu la [dosierpaghon de `niveloj.html`](./niveloj.html)
+kaj alklaku **Download raw file** (la sagon malsupren).
+Poste malfermu la elshutitan dosieron en via krozilo.
+
 Estis kreitaj pliaj ret-apoj kun la sama celo kaj surbaze de la harmona prezento de neegalajhoj por aliaj lokoj:
 - "[Belum: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwYKQYvG8XhRLoWLwzaNUlmbmF5rltLOVySPOghF-7qDxIlBSGbF0tslFoAxot-hc0e/exec)"
 - "[Bremen ‒ Oslebshausen: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwMCbCHyS0efZdNoQ1ThOqyEEOjQ27PporNrxoED3J3N0PLXnG5o0WJ3f8TvFWVzNq_bw/exec)"
