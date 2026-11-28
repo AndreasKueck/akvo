@@ -1,22 +1,25 @@
-# Ret-apo "Rechtenfleth: akvoniveloj" kaj Android-apo "Akvo"
+# Ret-apo "Rechtenfleth: akvoniveloj" kaj Android-apo "Niveloj"
 
 Tiu chi GitHub-deponejo priskribas Guglo-Apoj-Skripto-projekton por neoficiala astronomia prognozo de
 akvoniveloj en Rechtenfleth lau la harmona prezento de neegalajhoj (germane: "harmonische Darstellung der Ungleichheiten", angle: "harmonic representation of inequalities").
 Koncerne germanajn lokojn prognozoj per la harmona prezento de neegalajhoj ordinare estas pli proksimaj al oficialaj prognozoj kaj al la realo, ol prognozoj per la harmona metodo (surbaze de ghi jen [ret-apo](https://script.google.com/a/~/macros/s/AKfycbzgeChQUzIlVM5wmtsrmwZkNNJUZgFLLPvtYkNztVaFhHHq2xp3NqImx2uolmQw_qBG4g/exec)).
 
-Ret-apo "[Rechtenfleth: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbw1p6S3LyNaRTIcSu4myv3SP-ZzSX302erglMDh8R9wwq1ZRAHCwJ8Nb9q5t-Isl0aX/exec)" kaj Android-apo "Akvo" (elshut-ligilo estas en la ret-apo-pagho) eligas la
+Ret-apo "[Rechtenfleth: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbw1p6S3LyNaRTIcSu4myv3SP-ZzSX302erglMDh8R9wwq1ZRAHCwJ8Nb9q5t-Isl0aX/exec)" eligas la
 akvonivelon por elektita momento kaj krome la tempojn kaj altojn de la
 maksimumaj kaj minimumaj akvoniveloj de elektita tago.
 
-### Senreta versio: `niveloj.html`
+### Senrete funkciantaj versioj: `niveloj.html` kaj Android-apo "Niveloj"
 
-Dosiero `niveloj.html` enhavas kopion de la pretaj modeloj.
+Dosiero `niveloj.html` enhavas kopion de la pretaj modeloj por pluraj lokoj.
 Ghi kalkulas akvonivelojn en via krozilo sen kontaktado al Guglo,
 datumprovizantoj au alia servilo.
 
 Por uzi tiun dosieron senrete, malfermu la [dosierpaghon de `niveloj.html`](./niveloj.html)
 kaj alklaku **Download raw file** (la sagon malsupren).
 Poste malfermu la elshutitan dosieron en via krozilo.
+
+Ankau Android-apo "[Niveloj](https://www.dropbox.com/scl/fi/cu98ho2gzbspgaf8q7t20/Niveloj_v1.0.0_1795836275851.apk?rlkey=54mbco063ijhcx74sncndfnth&st=t9s9w97u&dl=0)" enhavas kopion de la pretaj modeloj por pluraj lokoj.
+Ghi kalkulas akvonivelojn sen kontaktado al Guglo, datumprovizantoj au alia servilo. "Niveloj" estis kreita per AppMint disponigita de SmartrixLabs. Elshuto, instalo kaj uzo de la APK okazas je propra risko.
 
 Estis kreitaj pliaj ret-apoj kun la sama celo kaj surbaze de la harmona prezento de neegalajhoj por aliaj lokoj:
 - "[Belum: akvoniveloj](https://script.google.com/a/~/macros/s/AKfycbwYKQYvG8XhRLoWLwzaNUlmbmF5rltLOVySPOghF-7qDxIlBSGbF0tslFoAxot-hc0e/exec)"
